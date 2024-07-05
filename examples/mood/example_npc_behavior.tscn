@@ -1,0 +1,57 @@
+[gd_scene load_steps=7 format=3 uid="uid://dbxc70wjn01ej"]
+
+[ext_resource type="Script" path="res://addons/mood/mood_machine.gd" id="1_yqjyu"]
+[ext_resource type="Script" path="res://addons/mood/mood.gd" id="2_18yfu"]
+[ext_resource type="Script" path="res://addons/mood/mood_selector.gd" id="3_ruxxu"]
+[ext_resource type="Script" path="res://addons/mood/mood_transition.gd" id="4_tvf23"]
+[ext_resource type="Script" path="res://addons/mood/transitions/mood_transition_property.gd" id="5_diltd"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_00d0l"]
+
+[node name="ExampleNpcBehavior" type="Node2D"]
+
+[node name="Enemy2" type="Area2D" parent="."]
+
+[node name="Enemy Attitude" type="Node" parent="Enemy2" node_paths=PackedStringArray("target")]
+script = ExtResource("1_yqjyu")
+target = NodePath("..")
+metadata/_graph_changed_names = {
+Object(Node,"_import_path":NodePath(""),"unique_name_in_owner":false,"process_mode":0,"process_priority":0,"process_physics_priority":0,"process_thread_group":0,"physics_interpolation_mode":0,"auto_translate_mode":0,"editor_description":"","script":ExtResource("2_18yfu"),"override_parent_target":false,"target_node_override":null,"mood":null,"target":null,"machine":null,"metadata/graph_position":Vector2(-340, 260))
+: "Laul"
+}
+metadata/_graph_deleted_states = [null]
+
+[node name="Curious" type="Node" parent="Enemy2/Enemy Attitude"]
+script = ExtResource("2_18yfu")
+metadata/graph_position = Vector2(-180, 140)
+
+[node name="Mad" type="Node" parent="Enemy2/Enemy Attitude"]
+script = ExtResource("2_18yfu")
+metadata/graph_position = Vector2(80, 60)
+
+[node name="Friendly" type="Node" parent="Enemy2/Enemy Attitude"]
+script = ExtResource("2_18yfu")
+metadata/graph_position = Vector2(360, 200)
+
+[node name="Angry" type="Node" parent="Enemy2/Enemy Attitude"]
+script = ExtResource("2_18yfu")
+metadata/graph_position = Vector2(-340, 260)
+
+[node name="FiniteStateSelector" type="Node" parent="Enemy2/Enemy Attitude"]
+script = ExtResource("3_ruxxu")
+
+[node name="CuriousToMad" type="Node" parent="Enemy2/Enemy Attitude/FiniteStateSelector" node_paths=PackedStringArray("transition_from", "transition_to")]
+script = ExtResource("4_tvf23")
+transition_from = NodePath("../../Curious")
+transition_to = NodePath("../../Mad")
+
+[node name="MoodTransitionProperty" type="Node" parent="Enemy2/Enemy Attitude/FiniteStateSelector" node_paths=PackedStringArray("condition_target")]
+script = ExtResource("5_diltd")
+condition_target = NodePath("../../../..")
+
+[node name="MoodTransitionProperty2" type="Node" parent="Enemy2/Enemy Attitude/FiniteStateSelector" node_paths=PackedStringArray("condition_target")]
+script = ExtResource("5_diltd")
+condition_target = NodePath("../..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy2"]
+shape = SubResource("RectangleShape2D_00d0l")

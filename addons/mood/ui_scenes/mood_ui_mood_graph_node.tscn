@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://bu7oajgbx1sim"]
+
+[node name="MoodUiMoodGraphNode" type="GraphNode"]
+resizable = true
+ignore_invalid_connection_type = true
+slot/0/left_enabled = true
+slot/0/left_type = 1
+slot/0/left_color = Color(0.6, 1, 1, 1)
+slot/0/left_icon = null
+slot/0/right_enabled = false
+slot/0/right_type = 0
+slot/0/right_color = Color(1, 1, 1, 1)
+slot/0/right_icon = null
+slot/0/draw_stylebox = true
+slot/1/left_enabled = false
+slot/1/left_type = 0
+slot/1/left_color = Color(1, 1, 1, 1)
+slot/1/left_icon = null
+slot/1/right_enabled = true
+slot/1/right_type = 0
+slot/1/right_color = Color(1, 0.6, 0.6, 1)
+slot/1/right_icon = null
+slot/1/draw_stylebox = true
+
+[node name="IncomingConnections" type="Label" parent="."]
+layout_mode = 2
+text = "<- From"
+
+[node name="OutgoingConnections" type="Label" parent="."]
+layout_mode = 2
+text = "To ->"
+horizontal_alignment = 2
