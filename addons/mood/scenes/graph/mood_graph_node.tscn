@@ -1,0 +1,44 @@
+[gd_scene load_steps=3 format=3 uid="uid://bu7oajgbx1sim"]
+
+[ext_resource type="Script" path="res://addons/mood/scenes/graph/mood_graph_node.gd" id="1_14w7t"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bxsq8"]
+bg_color = Color(0.195163, 0.49576, 0.328135, 1)
+
+[node name="MoodGraphNode" type="GraphNode"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -77.5
+offset_right = 77.5
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_styles/titlebar = SubResource("StyleBoxFlat_bxsq8")
+resizable = true
+ignore_invalid_connection_type = true
+slot/0/left_enabled = true
+slot/0/left_type = 1
+slot/0/left_color = Color(0.6, 1, 1, 1)
+slot/0/left_icon = null
+slot/0/right_enabled = true
+slot/0/right_type = 0
+slot/0/right_color = Color(1, 1, 1, 1)
+slot/0/right_icon = null
+slot/0/draw_stylebox = true
+script = ExtResource("1_14w7t")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="FromArrow" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 2
+text = "⬅ From"
+
+[node name="ToArrow" type="Label" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 10
+text = "To ➡"
+horizontal_alignment = 2
+
+[connection signal="position_offset_changed" from="." to="." method="_on_position_offset_changed"]

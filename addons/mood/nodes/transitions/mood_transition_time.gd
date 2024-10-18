@@ -1,16 +1,18 @@
+@tool
 class_name MoodTransitionTime extends MoodTransition
 
 @export var time: float = 1
 
 var _timer: SceneTreeTimer
+var _already_triggered := false
 
 func _is_valid() -> bool:
 	if _timer:
 		return false
 		
-	_setup_timer()
+	_setup_timer() # no await
 
-	return true
+	return _already_triggered
 
 func _setup_timer()  -> void:
 	if _timer:
@@ -22,4 +24,5 @@ func _setup_timer()  -> void:
 	# @TODO export var for process_always
 	_timer = get_tree().create_timer(time, true, process_physics)
 	await _timer.timeout
+	_already_triggered = true
 	_timer = null

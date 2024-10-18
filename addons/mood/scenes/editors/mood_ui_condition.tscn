@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://c8ha2ga6v0w3a"]
 
-[ext_resource type="Script" path="res://addons/mood/inspector_scenes/mood_ui_condition.gd" id="1_ayhqb"]
+[ext_resource type="Script" path="res://addons/mood/scenes/editors/mood_ui_condition.gd" id="1_ayhqb"]
 [ext_resource type="Texture2D" uid="uid://c0ipnppxufc8u" path="res://addons/mood/icons/trash.svg" id="2_76o34"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o3bqq"]
@@ -44,6 +44,7 @@ remove_condition_button = NodePath("HeaderContainer/HBoxContainer/RemoveConditio
 
 [node name="HeaderContainer" type="PanelContainer" parent="."]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_o3bqq")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="HeaderContainer"]
@@ -52,7 +53,7 @@ theme_override_constants/separation = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="HeaderContainer/HBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 6
+size_flags_horizontal = 2
 
 [node name="IndexLabel" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
 layout_mode = 2
@@ -68,7 +69,7 @@ text = "0"
 [node name="RemoveConditionButton" type="Button" parent="HeaderContainer/HBoxContainer"]
 custom_minimum_size = Vector2(25, 25)
 layout_mode = 2
-size_flags_horizontal = 8
+size_flags_horizontal = 3
 icon = ExtResource("2_76o34")
 icon_alignment = 1
 expand_icon = true
@@ -76,6 +77,7 @@ expand_icon = true
 [node name="ConditionContainer" type="PanelContainer" parent="."]
 layout_mode = 2
 size_flags_horizontal = 3
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_yrtka")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="ConditionContainer"]
@@ -84,16 +86,12 @@ theme_override_constants/separation = 2
 
 [node name="PropSelectorContainer" type="PanelContainer" parent="ConditionContainer/HBoxContainer"]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_fupwr")
 
 [node name="PropPicker" type="VBoxContainer" parent="ConditionContainer/HBoxContainer/PropSelectorContainer"]
 layout_mode = 2
 theme_override_constants/separation = 2
-
-[node name="PropertySelectorButton" type="Button" parent="ConditionContainer/HBoxContainer/PropSelectorContainer/PropPicker"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Choose Property"
 
 [node name="SelectedProperty" type="Label" parent="ConditionContainer/HBoxContainer/PropSelectorContainer/PropPicker"]
 unique_name_in_owner = true
@@ -102,6 +100,11 @@ theme_override_colors/font_color = Color(0.497474, 0.497474, 0.497474, 1)
 theme_override_styles/normal = SubResource("StyleBoxEmpty_bnf3b")
 text = "Select a Property..."
 horizontal_alignment = 1
+
+[node name="PropertySelectorButton" type="Button" parent="ConditionContainer/HBoxContainer/PropSelectorContainer/PropPicker"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Choose Property"
 
 [node name="Condition" type="OptionButton" parent="ConditionContainer/HBoxContainer"]
 unique_name_in_owner = true
@@ -157,6 +160,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.497474, 0.497474, 0.497474, 1)
 text = "<Selected Editor>"
 
+[connection signal="pressed" from="HeaderContainer/HBoxContainer/RemoveConditionButton" to="." method="_on_remove_condition_button_pressed"]
 [connection signal="pressed" from="ConditionContainer/HBoxContainer/PropSelectorContainer/PropPicker/PropertySelectorButton" to="." method="_on_property_selector_button_pressed"]
 [connection signal="item_selected" from="ConditionContainer/HBoxContainer/Condition" to="." method="_on_condition_item_selected"]
 [connection signal="text_changed" from="ConditionContainer/HBoxContainer/PropEditContainer/NumberEdit" to="." method="_on_number_edit_text_changed"]

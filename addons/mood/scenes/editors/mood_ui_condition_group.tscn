@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://b83qn3wnyfv2u"]
 
-[ext_resource type="Script" path="res://addons/mood/inspector_scenes/mood_ui_condition_group.gd" id="1_saayx"]
+[ext_resource type="Script" path="res://addons/mood/scenes/editors/mood_ui_condition_group.gd" id="1_saayx"]
 [ext_resource type="Texture2D" uid="uid://c0ipnppxufc8u" path="res://addons/mood/icons/trash.svg" id="4_j5igr"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5akar"]
@@ -26,7 +26,7 @@ border_width_left = 2
 border_width_right = 2
 border_width_bottom = 2
 
-[node name="MoodUiConditionGroup" type="VBoxContainer" node_paths=PackedStringArray("index_label", "remove_group_button")]
+[node name="MoodUiConditionGroup" type="VBoxContainer" node_paths=PackedStringArray("index_label")]
 anchors_preset = 10
 anchor_right = 1.0
 offset_right = -652.0
@@ -36,24 +36,29 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 0
 script = ExtResource("1_saayx")
-index_label = NodePath("HeaderContainer/HBoxContainer/IndexLabel")
-remove_group_button = NodePath("HeaderContainer/HBoxContainer/RemoveGroup")
+index_label = NodePath("HeaderContainer/HBoxContainer/HBoxContainer/IndexLabel")
+_was_removed = null
 
 [node name="HeaderContainer" type="PanelContainer" parent="."]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_5akar")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="HeaderContainer"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Label1" type="Label" parent="HeaderContainer/HBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="HeaderContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label1" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 1
 text = "Condition Group"
 vertical_alignment = 1
 
-[node name="IndexLabel" type="Label" parent="HeaderContainer/HBoxContainer"]
+[node name="IndexLabel" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.72549, 0.92549, 0.254902, 1)
@@ -62,12 +67,15 @@ text = "-1"
 [node name="RemoveGroup" type="Button" parent="HeaderContainer/HBoxContainer"]
 custom_minimum_size = Vector2(25, 25)
 layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Remove this condition group."
 icon = ExtResource("4_j5igr")
 icon_alignment = 1
 expand_icon = true
 
 [node name="ParamContainer" type="PanelContainer" parent="."]
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_5tpe3")
 
 [node name="AndAllConditions" type="CheckBox" parent="ParamContainer"]
@@ -79,6 +87,7 @@ text = "\"AND\" All Conditions"
 [node name="ConditionsContainer" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 2
+mouse_filter = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_vrv5f")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="ConditionsContainer"]
@@ -88,14 +97,13 @@ theme_override_constants/separation = 5
 [node name="MarginContainer" type="MarginContainer" parent="ConditionsContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/margin_top = 5
-theme_override_constants/margin_bottom = 5
 
 [node name="AddCondition" type="Button" parent="ConditionsContainer/VBoxContainer/MarginContainer"]
 custom_minimum_size = Vector2(200, 2.08165e-12)
 layout_mode = 2
 size_flags_horizontal = 4
-size_flags_vertical = 3
-text = "Add A Condition"
+size_flags_vertical = 4
+text = "Add Condition"
 
 [node name="Conditions" type="VBoxContainer" parent="ConditionsContainer/VBoxContainer"]
 unique_name_in_owner = true
@@ -103,5 +111,7 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 2
 
+[connection signal="pressed" from="HeaderContainer/HBoxContainer/RemoveGroup" to="." method="_on_remove_group_pressed"]
 [connection signal="toggled" from="ParamContainer/AndAllConditions" to="." method="_on_all_of_toggled"]
 [connection signal="pressed" from="ConditionsContainer/VBoxContainer/MarginContainer/AddCondition" to="." method="_on_add_condition_pressed"]
+[connection signal="child_exiting_tree" from="ConditionsContainer/VBoxContainer/Conditions" to="." method="_on_conditions_child_exiting_tree"]

@@ -1,5 +1,5 @@
 @tool
-extends VBoxContainer
+class_name MoodUiCondition extends VBoxContainer
 
 const VALID_TYPES := [
 	TYPE_STRING, TYPE_STRING_NAME, TYPE_INT, TYPE_FLOAT, TYPE_BOOL
@@ -9,6 +9,8 @@ const VALID_TYPES := [
 
 @export var index_label: Label
 @export var remove_condition_button: Button
+
+@export var _was_removed := false
 
 @export var condition_target: Node:
 	set(val):
@@ -69,12 +71,6 @@ func _on_number_edit_text_changed(new_text: String) -> void:
 func _on_property_selector_button_pressed() -> void:
 	EditorInterface.popup_property_selector(condition_target, _on_prop_selected, VALID_TYPES)
 
-## and we use the property to figure stuff out.
-func _on_prop_selected(property_path: NodePath) -> void:
-	var clean_name = property_path.get_subname(0)
-	condition.property = clean_name # ":property" -> "property"
-	_update_property_editor()
-
 func _on_condition_item_selected(index: int) -> void:
 	if not condition:
 		return
@@ -93,18 +89,30 @@ func _on_bool_edit_toggled(toggled_on: bool) -> void:
 	if condition:
 		condition.value = toggled_on
 
+func _on_remove_condition_button_pressed() -> void:
+	_was_removed = true
+	queue_free.call_deferred()
+
 #endregion
 
 #region Private Helper Functions
+
+## and we use the property to figure stuff out.
+func _on_prop_selected(property_path: NodePath) -> void:
+	var clean_name = property_path.get_subname(0)
+	condition.property = clean_name # ":property" -> "property"
+	_update_property_editor()
 
 func _update_property_editor() -> void:
 	if not condition:
 		return
 
 	if condition.property:
+		%PropertySelectorButton.text = "Change Property"
 		%SelectedProperty.text = condition.property
 		%SelectedProperty.add_theme_color_override("font_color", Color("b9ec41"))
 	else:
+		%PropertySelectorButton.text = "Choose Property"
 		%SelectedProperty.text = "Select A Property..."
 		%SelectedProperty.add_theme_color_override("font_color", Color("7f7f7f"))
 
@@ -151,5 +159,5 @@ func _update_property_editor() -> void:
 
 	if current_editor:
 		current_editor.show()
-			
+
 #endregion

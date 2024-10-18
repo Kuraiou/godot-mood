@@ -1,6 +1,7 @@
-@icon("icons/check-circle.svg")
+@icon("res://addons/mood/icons/check-circle.svg")
 @tool
-class_name Mood extends MoodChild
+class_name Mood
+extends MoodChild
 
 ## A [Mood] is a representation of a State in a [MoodMachine], which is a Finite
 ## State Machine..
@@ -134,38 +135,5 @@ func disable() -> void:
 	recurse("set_physics_process", false)
 	recurse("set_process_input", false)
 	recurse("set_process_unhandled_input", false)
-
-func has_unsaved_changes() -> bool:
-	return has_meta("_graph_awaiting_deletion") or has_meta("_graph_changed_name")
-
-func save_changes(emit_change: bool = true) -> void:
-	if not has_unsaved_changes():
-		return
-
-	if has_meta("_graph_awaiting_deletion"):
-		queue_free.call_deferred()
-
-		if machine and emit_change:
-			machine.mood_list_changed.emit(null)
-			machine.notify_property_list_changed()
-
-		return
-
-	if has_meta("_graph_changed_name"):
-		name = get_meta("_graph_changed_name")
-
-	# this also handles notifications
-	reset_changes(emit_change)
-
-func reset_changes(emit_change: bool = true) -> void:
-	if has_meta("_graph_awaiting_deletion"):
-		remove_meta("_graph_awaiting_deletion")
-
-	if has_meta("_graph_changed_name"):
-		remove_meta("_graph_changed_name")
-
-	if machine and emit_change:
-		machine.mood_list_changed.emit(self)
-		machine.notify_property_list_changed()
 
 #endregion

@@ -3,13 +3,16 @@ extends EditorPlugin
 
 #region Constants
 
-const GRAPH_SCENE: PackedScene = preload("res://addons/mood/ui_scenes/mood_machine_graph_ui.tscn")
-const INSPECTOR_PLUGIN_SCRIPT = preload("res://addons/mood/sub_plugins/mood_inspector_plugin.gd")
+const GRAPH_SCENE: PackedScene = preload("res://addons/mood/scenes/graph/mood_machine_graph_edit.tscn")
+
 const INSPECTOR_CONDITION_PLUGIN_SCRIPT = preload("res://addons/mood/sub_plugins/mood_condition_inspector_plugin.gd")
+const INSPECTOR_SIGNAL_PLUGIN_SCRIPT = preload("res://addons/mood/sub_plugins/mood_transition_signal_inspector_plugin.gd")
+
 const CUSTOM_PROPERTIES: Dictionary = {
 	"show_mood_graph": {"type": TYPE_BOOL, "default": true, "category": "graph"},
 	"auto_switch_to_graph": {"type": TYPE_BOOL, "default": true, "category": "graph"},
-	"use_low_processor_mode_for_graph": {"type": TYPE_BOOL, "default": true, "category": "graph", "advanced": true}
+	"use_low_processor_mode_for_graph": {"type": TYPE_BOOL, "default": true, "category": "graph", "advanced": true},
+	"make_graph_properties_visible": {"type": TYPE_BOOL, "default": false, "category": "inspector", "advanced": true}
 }
 
 #endregion
@@ -18,9 +21,9 @@ const CUSTOM_PROPERTIES: Dictionary = {
 
 var inspector_plugin_instance: EditorInspectorPlugin
 var condition_inspector_instance: EditorInspectorPlugin
-var graphs := {}
-var previous_machine: MoodMachine = null
-var current_machine: MoodMachine = null
+var signal_inspector_instance: EditorInspectorPlugin
+var _graph: MoodMachineGraphEdit
+var _button: Button
 
 #endregion
 
@@ -47,6 +50,7 @@ func _enable_plugin() -> void:
 		ProjectSettings.set_initial_value(prop_name, prop_def["default"])
 		ProjectSettings.set_as_basic(prop_name, !prop_def.has("advanced"))
 
+
 func _disable_plugin() -> void:
 	for config_name in CUSTOM_PROPERTIES:
 		var def := CUSTOM_PROPERTIES.get(config_name) as Dictionary
@@ -54,29 +58,27 @@ func _disable_plugin() -> void:
 		if ProjectSettings.has_setting(prop_name):
 			ProjectSettings.clear(prop_name)
 
-func _enter_tree() -> void:
-	inspector_plugin_instance = INSPECTOR_PLUGIN_SCRIPT.new()
-	add_inspector_plugin(inspector_plugin_instance)
-	
+func _enter_tree() -> void:	
 	condition_inspector_instance = INSPECTOR_CONDITION_PLUGIN_SCRIPT.new()
 	add_inspector_plugin(condition_inspector_instance)
+	
+	signal_inspector_instance = INSPECTOR_SIGNAL_PLUGIN_SCRIPT.new()
+	add_inspector_plugin(signal_inspector_instance)
 
 func _exit_tree() -> void:
 	remove_inspector_plugin(inspector_plugin_instance)
 	remove_inspector_plugin(condition_inspector_instance)
+	remove_inspector_plugin(signal_inspector_instance)
 
-	for machine in graphs:
-		var config = graphs[machine]
-		var scene = config["scene"]
-		var button = config["button"]
-		remove_control_from_bottom_panel(scene)
-		scene.queue_free()
-		if is_instance_valid(button): # may have already been freed
-			button.queue_free()
+	if is_instance_valid(_graph):
+		print("removing graph")
+		remove_control_from_bottom_panel(_graph)
+		print("removed graph, queueing free")
+		_graph.queue_free()
+		print("queued free")
 
-	graphs = {}
-	previous_machine = null
-	current_machine = null
+	if is_instance_valid(_button):
+		_button.queue_free()
 
 #endregion
 
@@ -87,26 +89,22 @@ func _exit_tree() -> void:
 ##
 ## _handles gets called before _make_visible, which gets called before _edit.
 func _handles(object: Object) -> bool:
+	return object is MoodMachine or object is MoodMachineChild
+
+func _edit(object: Object) -> void:
 	if object is MoodMachine:
-		_handle_machine(object as MoodMachine)
-		return true
+		if not _graph or _graph.target_machine != object:
+			_clear_graph()
+			_add_graph_for_machine(object as MoodMachine)
+			_make_visible(true)
 	elif object is MoodMachineChild:
-		return _handle_machine((object as MoodMachineChild).machine)
-
-	previous_machine = current_machine
-	current_machine = null
-	return false
-
-func _handle_machine(machine: MoodMachine) -> bool:
-	if machine == null: # child without attached machine passed through
-		return false
-
-	if not graphs.has(machine):
-		_add_graph_for_machine(machine)
-
-	previous_machine = current_machine
-	current_machine = machine
-	return true
+		var machine: MoodMachine = (object as MoodMachineChild).machine
+		if not _graph or _graph.target_machine != machine:
+			_clear_graph()
+			_add_graph_for_machine(machine)
+			_make_visible(true)
+	else:
+		_clear_graph()
 
 ## Make the button and graph visible, and if configured, switch to that.
 ## Because each machine we interact with will end up with its own editor instance,
@@ -114,51 +112,17 @@ func _handle_machine(machine: MoodMachine) -> bool:
 ## after _handles, we can use the `current_machine` to do it.
 func _make_visible(visible: bool) -> void:
 	if visible:
-		_current_button().show()
+		if not _graph: # initial creation, we will make visible after creating graph
+			return
+
+		_button.show()
 		if _get_plugin_setting("auto_switch_to_graph") == true:
-			_current_button().toggled.emit(true)
-	elif previous_machine:
-		var config: Dictionary = graphs[previous_machine]
-
-		# if we're still focused on the graph UI, we need to switch away since we're
-		# about to make the button invisible.
-		if config["scene"].visible:
-			config["button"].toggled.emit(false)
-			config["button"].get_parent().get_children()[0].toggled.emit(true)
-
-		config["button"].hide()
-
-## Handle the pre/post editing of the FSM. Because this is called after _handles,
-## we want to operate on the previous_machine.
-func _edit(object: Object) -> void:
-	if object == null: # we focused off of our editing object so we want to use the previous_machine.
-		#if previous_machine:
-			#if previous_machine.has_unsaved_changes():
-				#var dialog := ConfirmationDialog.new()
-				#dialog.ok_button_text = "Save"
-				#dialog.cancel_button_text = "Toss Changes"
-				#dialog.title = "Unsaved Changes"
-				#dialog.dialog_text = "You have unsaved changes to %s. Would you like to save them?" % previous_machine.name.replace("*", "")
-				#dialog.confirmed.connect(_on_save_changes_dialog_confirmed.bind(previous_machine))
-				#dialog.canceled.connect(_on_save_changes_dialog_canceled.bind(previous_machine))
-				#dialog.popup_exclusive_centered(EditorInterface.get_editor_main_screen())
-		return
-
-#endregion
-
-#region Signal Hooks
-
-func _on_save_changes_dialog_confirmed(machine: MoodMachine) -> void:
-	if not graphs.has(machine):
-		_add_graph_for_machine(machine)
-
-	machine.save_changes()
-
-func _on_save_changes_dialog_canceled(machine: MoodMachine) -> void:
-	if not graphs.has(machine):
-		_add_graph_for_machine(machine)
-
-	machine.reset_changes()
+			_button.toggled.emit(true)
+	elif _graph and _button:
+		_graph.hide()
+		_button.get_parent().get_children()[0].toggled.emit(true)
+		_button.toggled.emit(false)
+		_button.hide()
 
 #endregion
 
@@ -171,34 +135,24 @@ func _get_plugin_setting(key: String) -> Variant:
 	var setting := "mood/%s/%s" % [CUSTOM_PROPERTIES[key].get("category", "config"), key]
 	return ProjectSettings.get_setting(setting)
 
-func _current_button() -> Button:
-	if not current_machine:
-		return null
-	
-	return graphs[current_machine]["button"] as Button
-
-func _current_graph_scene() -> MoodMachineGraphUI:
-	if not current_machine:
-		return null
-
-	return graphs[current_machine]["scene"] as MoodMachineGraphUI
+func _clear_graph() -> void:
+	if is_instance_valid(_graph):
+		remove_control_from_bottom_panel(_graph)
+		_graph.queue_free()
+		_graph = null
+	if is_instance_valid(_button):
+		_button.queue_free()
+		_button = null
 
 func _add_graph_for_machine(machine: MoodMachine) -> void:
-	if graphs.has(machine):
-		return
+	_graph = GRAPH_SCENE.instantiate()
+	_graph.undo_redo = get_undo_redo()
+	_graph.target_machine = machine
+	_button = add_control_to_bottom_panel(_graph, "Mood FSM Editor")
+	_button.toggled.connect(_on_graph_toggled)
 
-	var graph_ctrl: MoodMachineGraphUI = GRAPH_SCENE.instantiate()
-	graph_ctrl.target_machine = machine
-	var button: Button = add_control_to_bottom_panel(graph_ctrl, "Mood FSM Editor")
-	button.toggled.connect(_on_graph_toggled)
-
-	graph_ctrl.hide()
-	button.hide()
-
-	graphs[machine] = {
-		"scene": graph_ctrl,
-		"button": button
-	}
+	_graph.hide()
+	_button.hide()
 
 var default_low_processor_mode: bool
 func _on_graph_toggled(toggled: bool) -> void:

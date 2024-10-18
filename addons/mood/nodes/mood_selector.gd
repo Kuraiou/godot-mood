@@ -1,4 +1,4 @@
-@icon("icons/transmission-circle.svg")
+@icon("res://addons/mood/icons/transmission-circle.svg")
 @tool
 class_name MoodSelector extends MoodMachineChild
 

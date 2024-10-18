@@ -8,22 +8,28 @@
 
 config_version=5
 
+[addons]
+
+markdown_book/docs_folder="res://addons/mood/docs/"
+
 [application]
 
 config/name="Mood"
-run/main_scene="res://examples/mood/example_npc_behavior.tscn"
-config/features=PackedStringArray("4.3", "Forward Plus")
+run/main_scene="res://addons/mood/scenes/editors/mood_ui_group_container.tscn"
+config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
 [debug]
 
+gdscript/warnings/unused_private_class_variable=2
+gdscript/warnings/shadowed_variable_base_class=2
 gdscript/warnings/untyped_declaration=2
 
 [display]
 
 window/size/initial_position_type=0
-window/energy_saving/keep_screen_on.editor_hint=true
 window/per_pixel_transparency/allowed=true
+window/energy_saving/keep_screen_on.editor_hint=true
 
 [dotnet]
 
@@ -38,8 +44,7 @@ naming/script_name_casing=2
 
 enabled=PackedStringArray("res://addons/mood/plugin.cfg")
 
-[editors]
+[mood]
 
-mood/show_mood_graph=true
-mood/auto_switch_to_graph=true
-mood/use_low_processor_mode_for_graphs=true
+graph/show_mood_graph=true
+graph/auto_switch_to_graph=false

@@ -3,7 +3,6 @@ class_name MoodTransitionCondition extends Resource
 enum Operator { EQ = 0, LT = 1, LTE = 2, GT = 3, GTE = 4, NOT = 5 }
 
 ## The property we're evaluating.
-@export var node
 @export var property := ""
 ## The mechanism for comparison.
 @export var comparator: Operator = Operator.EQ
@@ -26,6 +25,7 @@ func _is_valid(target: Node, cache: Dictionary = {}) -> bool:
 			if not target.has_method(property):
 				push_error("Expected Node %s to respond to %s but it does not" % [target.name, property])
 				return false
+			cache[property] = target.call(property)
 		else:
 			if property not in target:
 				push_error("Expected Property %s to be in Node %s but it was not" % [property, target.name])

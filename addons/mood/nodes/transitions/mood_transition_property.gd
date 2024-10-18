@@ -1,13 +1,14 @@
 @tool
-extends MoodTransition
-class_name MoodTransitionProperty
+class_name MoodTransitionProperty extends MoodTransition
 
 ## The node whose properties we are going to evaluate against.
 @export var condition_target: Node:
 	set(val):
 		if condition_target != val:
+			# changing from one target to another instead of initial set
+			if condition_target != null:
+				condition_groups = [] as Array[MoodTransitionConditionGroup]
 			condition_target = val
-			condition_groups = [] as Array[MoodTransitionConditionGroup]
 			notify_property_list_changed()
 
 ## The array of condition groups to evaluate. If any or all of them
@@ -21,16 +22,6 @@ class_name MoodTransitionProperty
 		if and_all_groups != val:
 			and_all_groups = val
 			notify_property_list_changed()
-
-#region Public Methods
-
-func add_condition_group() -> MoodTransitionConditionGroup:
-	var new_group = MoodTransitionConditionGroup.new()
-	new_group.conditions = [MoodTransitionCondition.new()] as Array[MoodTransitionCondition]
-	condition_groups.append(new_group)
-	return new_group
-
-#endregion
 
 #region Private Helper Methods
 

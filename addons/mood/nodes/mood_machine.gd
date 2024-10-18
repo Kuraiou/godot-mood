@@ -1,4 +1,4 @@
-@icon("icons/circles.svg")
+@icon("res://addons/mood/icons/circles.svg")
 @tool
 class_name MoodMachine extends Node
 
@@ -67,7 +67,7 @@ func _init():
 	child_entered_tree.connect(_on_child_entered_tree)
 	child_exiting_tree.connect(_on_child_exiting_tree)
 
-func _ready():
+func _ready() -> void:
 	for child in get_children():
 		_recursively_ready_children(child)
 	
@@ -81,20 +81,6 @@ func _ready():
 ## Return the current mood as a name.
 func mood() -> String:
 	return current_mood.name
-
-## Return whether or not we have meta representing changes that have yet to be
-## applied.
-func has_unsaved_changes() -> bool:
-	if has_meta("_graph_new_moods"):
-		return true
-	
-	for child: Mood in find_children("*", "Mood") as Array[Mood]:
-		if child.has_meta("_graph_awaiting_deletion"):
-			return true
-		if child.has_meta("_graph_changed_name"):
-			return true
-	
-	return false
 
 ## Change the current mood.
 ## @param mood [String, Mood] the mood to change to.
@@ -114,28 +100,6 @@ func change_mood(mood: Variant) -> void:
 		current_mood = mood_mode
 	else:
 		push_error("Attempted to go to mood %s but it is not a child mood of %s" % [mood, name])
-
-# ------- editor methods ------ #
-
-func save_changes() -> void:
-	if not has_unsaved_changes():
-		return
-
-	# 1. create new moods
-	var new_moods = get_meta("_graph_new_moods", [])
-	for mood_def: Dictionary in new_moods:
-		var mood := Mood.new()
-		mood.name = mood_def["name"]
-		mood.set_meta("graph_position", mood_def["graph_position"])
-		add_child(mood)
-		mood.owner = owner
-
-	# 2. apply changes
-	for child: Mood in find_children("*", "Mood") as Array[Mood]:
-		child.save_changes(false)
-
-	# 3. reset meta and emit signals
-	reset_changes()
 
 func reset_changes() -> void:
 	var did_changes := false
@@ -174,7 +138,10 @@ func _on_child_entered_tree(child: Node) -> void:
 			var name_callable = _on_child_mood_changed_name.bind(child)
 			if not child.name_changed.is_connected(name_callable):
 				child.name_changed.connect(name_callable)
-			mood_list_changed.emit(child)
+	
+			# if we're not ready then we're just rebuilding, that's not the same.
+			if is_node_ready():
+				mood_list_changed.emit(child)
 
 		update_configuration_warnings()
 
@@ -184,9 +151,6 @@ func _on_child_exiting_tree(child: Node) -> void:
 	await child.tree_exited
 
 	if "machine" in child:
-		if child.has_method("reset_changes"):
-			child.reset_changes() # this will emit a mood change if appropriate
-
 		# @NEEDS_TEST: moving a child from one machine to another, does it
 		# reassign properly?
 		child.machine = null
