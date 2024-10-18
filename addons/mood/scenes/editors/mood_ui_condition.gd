@@ -23,7 +23,7 @@ const VALID_TYPES := [
 		for prop in val.get_property_list():
 			_properties_by_name[prop["name"]] = prop
 
-@export var condition: MoodTransitionCondition:
+@export var condition: MoodCondition:
 	set(val):
 		if condition == val:
 			return

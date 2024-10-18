@@ -16,6 +16,7 @@ var mood: Mood = null:
 			return
 		
 		mood = value
+		machine = mood.machine
 
 		# assign our processing status to match the mood's.
 		set_process(mood.is_processing())
@@ -42,27 +43,7 @@ func _init():
 
 ## when a node comes in under us, if we can assign their mood, let's do so.
 func _on_child_entered_tree(node: Node) -> void:
-	super(node)
-
-	if node is MoodChild:
+	if "mood" in node:
 		node.mood = self
-
-#endregion
-
-#region Public Methods
-
-func recurse(method: StringName, varargs: Variant = [], deferred: bool = false) -> void:
-	if varargs is not Array:
-		varargs = [varargs]
-
-	for child in get_children():
-		if child is MoodChild:
-			var fn = Callable(child, method)
-			if deferred:
-				# @TODO: is the bindv reverse correct or what?
-				fn.bindv(varargs.reverse()).call_deferred()
-			else:
-				fn.callv(varargs)
-			child.recurse(method, varargs, deferred)
 
 #endregion

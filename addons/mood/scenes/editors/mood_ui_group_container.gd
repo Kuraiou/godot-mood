@@ -16,7 +16,7 @@ const COND_GROUP_SCENE: PackedScene = preload("res://addons/mood/scenes/editors/
 
 #region Public Methods
 
-func add_condition_group(condition_group: MoodTransitionConditionGroup, id: int = -1) -> void:
+func add_condition_group(condition_group: MoodConditionGroup, id: int = -1) -> void:
 		if id == -1:
 			id = %Groups.get_child_count()
 
@@ -38,8 +38,8 @@ func _on_remove_group_button_pressed(scene: MoodUiConditionGroup) -> void:
 	scene.queue_free()
 
 func _on_add_group_button_pressed() -> void:
-	var new_group := MoodTransitionConditionGroup.new()
-	new_group.conditions = [MoodTransitionCondition.new()] as Array[MoodTransitionCondition]
+	var new_group := MoodConditionGroup.new()
+	new_group.conditions = [MoodCondition.new()] as Array[MoodCondition]
 	transition.condition_groups.append(new_group)
 	add_condition_group(new_group)
 
@@ -66,7 +66,7 @@ func _connect_to_transition() -> void:
 		await ready
 
 	var id := 0
-	for condition_group: MoodTransitionConditionGroup in transition.condition_groups:
+	for condition_group: MoodConditionGroup in transition.condition_groups:
 		add_condition_group(condition_group, id)
 		id += 1
 

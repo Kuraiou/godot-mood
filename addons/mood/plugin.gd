@@ -146,7 +146,6 @@ func _clear_graph() -> void:
 
 func _add_graph_for_machine(machine: MoodMachine) -> void:
 	_graph = GRAPH_SCENE.instantiate()
-	_graph.undo_redo = get_undo_redo()
 	_graph.target_machine = machine
 	_button = add_control_to_bottom_panel(_graph, "Mood FSM Editor")
 	_button.toggled.connect(_on_graph_toggled)

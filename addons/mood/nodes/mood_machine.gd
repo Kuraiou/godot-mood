@@ -4,17 +4,27 @@ class_name MoodMachine extends Node
 
 ## A node used to manage and process logic on [Mood] children.
 
-#region Configuration
+#region Configuration (Exports)
 
+## The mood to select when the machine is started, before any
+## mood condition are evaluated.
+## If not set, the first mood child of the machine is used.
 @export var initial_mood: Mood = null:
-	set(value):
-		initial_mood = value
-		update_configuration_warnings()
+	get():
+		if initial_mood:
+			return initial_mood
 
+		return find_children("*", "Mood").front() as Mood
+
+## The main object the mood's component scripts will evaluate
+## against. Because scripts cannot (currently) be evaluated in
+## a dynamic context, the target is used as a reference for evaluating
+##
 @export var target: Node = null:
 	set(value):
+		# pass the target through to moods and underlying components.
 		for child in get_children():
-			if child is MoodMachineChild:
+			if "target" in child:
 				child.target = value
 
 		if target == value:
@@ -26,28 +36,42 @@ class_name MoodMachine extends Node
 
 #region Member Attributes
 
+## The current mood node reference.
 var current_mood: Mood = null:
+	get():
+		if current_mood:
+			return current_mood
+		return initial_mood
 	set(value):
+		# we must always have a mood.
 		if value == null:
 			return
 
 		if current_mood == value:
+			return
+			
+		mood_changing.emit(current_mood, value)
+
+		if _block_change:
+			_block_change = false
 			return
 
 		if previous_mood:
 			previous_mood._exit_mood(current_mood)
 			previous_mood.mood_exited.emit(current_mood)
 			previous_mood.disable()
+
 		previous_mood = current_mood
+		current_mood = value
+		
+		mood_changed.emit(previous_mood, current_mood)
 
 		value._enter_mood(previous_mood)
 		value.mood_entered.emit(previous_mood)
 		value.enable()
 
-		current_mood = value
-		mood_changed.emit(previous_mood, current_mood)
-
 var previous_mood: Mood = null
+var _block_change: bool = false
 
 #endregion
 
@@ -56,8 +80,13 @@ var previous_mood: Mood = null
 ## A tool signal for when a mood is added or removed.
 signal mood_list_changed(mood_mode: Mood)
 
-## signaled when the mood changes.
-signal mood_changed(previous_mood: Mood, next_mood: Mood)
+## signaled when the mood changes, before the values are
+## assigned.
+signal mood_changing(current_mood: Mood, next_mood: Mood)
+
+## signaled when the mood has changed, after the new
+## value has been assigned.
+signal mood_changed(previous_mood: Mood, current_mood: Mood)
 
 #endregion
 
@@ -82,7 +111,12 @@ func _ready() -> void:
 func mood() -> String:
 	return current_mood.name
 
-## Change the current mood.
+## If an underlying script wants to stop a transition, it can call
+## this method in response to the mood_changed signal.
+func keep_mood() -> void:
+	_block_change = true
+
+## Change the current mood manually.
 ## @param mood [String, Mood] the mood to change to.
 ## @return [Error] OK if the node was found, 
 func change_mood(mood: Variant) -> void:
@@ -101,67 +135,26 @@ func change_mood(mood: Variant) -> void:
 	else:
 		push_error("Attempted to go to mood %s but it is not a child mood of %s" % [mood, name])
 
-func reset_changes() -> void:
-	var did_changes := false
-	if has_meta("_graph_new_moods"):
-		did_changes = true
-		remove_meta("_graph_new_moods")
-
-	for child: Mood in find_children("*", "Mood") as Array[Mood]:
-		if child.has_unsaved_changes():
-			did_changes = true
-			child.reset_changes(false)
-
-	if did_changes:
-		mood_list_changed.emit(null)
-		notify_property_list_changed()
-
-#endregion
-
-#region Built-In Overloads
-
-#func set_meta(meta_name: StringName, value: Variant) -> void:
-	#super(meta_name, value)
-#
-#func remove_meta(meta_name: StringName) -> void:
-	#super(meta_name)
-
 #endregion
 
 #region Signal Response Methods
 
 func _on_child_entered_tree(child: Node) -> void:
-	if child is MoodMachineChild:
+	if "machine" in child:
 		child.machine = self
 
-		if child is Mood:
-			var name_callable = _on_child_mood_changed_name.bind(child)
-			if not child.name_changed.is_connected(name_callable):
-				child.name_changed.connect(name_callable)
-	
-			# if we're not ready then we're just rebuilding, that's not the same.
-			if is_node_ready():
-				mood_list_changed.emit(child)
-
-		update_configuration_warnings()
+	if child is Mood and is_node_ready():
+		mood_list_changed.emit(child)
 
 ## When a child [Mood] node leaves the FSM, we want to reflect that change onto
 ## the editor graph, so we need to emit the mood list changed signal.
 func _on_child_exiting_tree(child: Node) -> void:
 	await child.tree_exited
 
-	if "machine" in child:
+	if "machine" in child and is_instance_valid(child):
 		# @NEEDS_TEST: moving a child from one machine to another, does it
 		# reassign properly?
 		child.machine = null
-		update_configuration_warnings()
-
-## When a child [Mood] node changes it's name, we want to reflect that change
-## onto the editor graph, so we need to emit the mood list changed signal.
-func _on_child_mood_changed_name(old_name: StringName, mood_mode: Mood) -> void:
-	# only emit if the name change isn't just the adding a "*":
-	if old_name.rstrip("*") != mood_mode.name.rstrip("*"):
-		mood_list_changed.emit(mood_mode)
 
 #endregion
 

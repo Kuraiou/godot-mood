@@ -15,7 +15,7 @@ const CONDITION_SCENE: PackedScene = preload("res://addons/mood/scenes/editors/m
 
 		condition_target = val
 
-@export var group: MoodTransitionConditionGroup = null:
+@export var group: MoodConditionGroup = null:
 	set(val):
 		if group != null or group == val: # write once
 			return
@@ -28,7 +28,7 @@ const CONDITION_SCENE: PackedScene = preload("res://addons/mood/scenes/editors/m
 
 #region Public Methods
 
-func add_condition(condition: MoodTransitionCondition, id: int = -1) -> Node:
+func add_condition(condition: MoodCondition, id: int = -1) -> Node:
 	if id == -1:
 		id = %Conditions.get_child_count()
 
@@ -51,7 +51,7 @@ func _on_add_condition_pressed() -> void:
 	if %Conditions.get_child_count() == 1: # we're adding our second entry so show the remove button on the first
 		%Conditions.get_child(0).remove_condition_button.show()
 
-	var new_condition := MoodTransitionCondition.new()
+	var new_condition := MoodCondition.new()
 	group.conditions.append(new_condition)
 	group.notify_property_list_changed()
 	add_condition(new_condition)
@@ -67,7 +67,7 @@ func _on_conditions_child_exiting_tree(node: Node) -> void:
 	if not node._was_removed:
 		return
 
-	var condition: MoodTransitionCondition = node.condition
+	var condition: MoodCondition = node.condition
 	await node.tree_exited
 
 	group.conditions.erase(condition)
@@ -95,7 +95,7 @@ func _connect_to_group() -> void:
 
 	%AndAllConditions.button_pressed = group.and_all_conditions
 
-	for cond: MoodTransitionCondition in group.conditions:
+	for cond: MoodCondition in group.conditions:
 		add_condition(cond)
 
 #endregion

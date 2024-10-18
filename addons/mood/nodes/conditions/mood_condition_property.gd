@@ -1,4 +1,7 @@
-class_name MoodTransitionCondition extends Resource
+class_name MoodConditionProperty extends MoodCondition
+
+## A type of condition that evaluates whether a property or
+## method result on an object meets a specific criteria.
 
 enum Operator { EQ = 0, LT = 1, LTE = 2, GT = 3, GTE = 4, NOT = 5 }
 
@@ -8,7 +11,7 @@ enum Operator { EQ = 0, LT = 1, LTE = 2, GT = 3, GTE = 4, NOT = 5 }
 @export var comparator: Operator = Operator.EQ
 ## The value we're comparing against. Because it's variant,
 ## we have to do some shenanigans in the inspector plugin.
-@export var value: Variant = null
+@export var criteria: Variant = null
 @export var is_callable := false
 
 ## Return whether or not an input is valid.
@@ -36,16 +39,16 @@ func _is_valid(target: Node, cache: Dictionary = {}) -> bool:
 
 	match comparator:
 		Operator.EQ:
-			return input == value
+			return input == criteria
 		Operator.LT:
-			return input < value
+			return input < criteria
 		Operator.LTE:
-			return input <= value
+			return input <= criteria
 		Operator.GT:
-			return input > value
+			return input > criteria
 		Operator.GTE:
-			return input >= value
+			return input >= criteria
 		Operator.NOT:
-			return input != value
+			return input != criteria
 	
 	return false

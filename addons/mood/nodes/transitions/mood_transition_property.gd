@@ -7,13 +7,13 @@ class_name MoodTransitionProperty extends MoodTransition
 		if condition_target != val:
 			# changing from one target to another instead of initial set
 			if condition_target != null:
-				condition_groups = [] as Array[MoodTransitionConditionGroup]
+				condition_groups = [] as Array[MoodConditionGroup]
 			condition_target = val
 			notify_property_list_changed()
 
 ## The array of condition groups to evaluate. If any or all of them
 ## evaluate to true (based on [property and_all_groups]), then the transition is valid.
-@export var condition_groups: Array[MoodTransitionConditionGroup] = []
+@export var condition_groups: Array[MoodConditionGroup] = []
 
 ## If true, all groups must evaluate to true for the transition to occur ("AND");
 ## if false, only one group must evaluate to true ("OR").

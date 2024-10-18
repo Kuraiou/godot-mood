@@ -43,4 +43,5 @@ func parent() -> MoodMachineChild:
 	return transition
 
 func _on_position_offset_changed() -> void:
+	print("position offset changed")
 	transition.set_meta("graph_position", position_offset)

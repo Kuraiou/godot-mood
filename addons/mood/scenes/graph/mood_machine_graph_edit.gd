@@ -13,8 +13,6 @@ const TRANSITION_GRAPH_NODE_SCENE: PackedScene = preload("res://addons/mood/scen
 const CONNECTION_TYPE_MOOD := 0
 const CONNECTION_TYPE_TRANSITION := 1
 
-var undo_redo: EditorUndoRedoManager = null
-
 var target_machine: MoodMachine = null:
 	set(value):
 		# disallow changing the target
@@ -34,14 +32,16 @@ var target_machine: MoodMachine = null:
 var popup_offset: Vector2
 var hover_node: GraphNode
 var name_change_node: GraphNode
+var new_mood: Mood = null
 
 #region Public Methods
 
 func regenerate_nodes() -> void:
 	# 1. reset the mood of the map including its children.
+	clear_connections()
 	for child in get_children():
 		if child is GraphNode:
-			child.queue_free.call_deferred()
+			child.queue_free()
 
 	# 2. load moods from meta.
 	load_existing_moods()
@@ -55,8 +55,12 @@ func load_existing_moods() -> void:
 
 func load_existing_transitions() -> void:
 	var selector := (target_machine.find_children("*", "MoodSelector", false) as Array[MoodSelector]).front()
-	for trans: MoodTransition in selector.find_children("*", "MoodTransition") as Array[MoodTransition]:
-		_add_transition_to_graph(trans)
+	if selector:
+		for trans: MoodTransition in selector.find_children("*", "MoodTransition") as Array[MoodTransition]:
+			_add_transition_to_graph(trans)
+	else:
+		for trans: MoodTransition in target_machine.find_children("*", "MoodTransition") as Array[MoodTransition]:
+			_add_transition_to_graph(trans)
 
 # Remove a mood from the graph if possible..
 func remove_mood(graph_node: MoodGraphNode) -> void:
@@ -75,6 +79,7 @@ func remove_transition(graph_node: MoodTransitionGraphNode) -> void:
 #region Signal Hooks
 
 func _on_machine_changed_mood(_mood_node: Mood) -> void:
+	print("regenerating nodes from mood change")
 	regenerate_nodes()
 
 var _pending_connection_request: Dictionary = {}
@@ -91,7 +96,6 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 		[CONNECTION_TYPE_MOOD, CONNECTION_TYPE_MOOD]:
 			pick_transition_type_dialog.popup()
 			%PickupTypeButton.grab_focus()
-			
 
 			# 1. modal dialog box to select transition type
 			# 2. add transition of that type
@@ -111,9 +115,11 @@ func _get_selected_graph_nodes() -> Array[GraphNode]:
 	return results
 	
 func _on_graph_node_mouse_entered(node: GraphNode):
+	print("hovering over %s" % (node.name))
 	hover_node = node
 
 func _on_graph_node_mouse_exited(node: GraphNode):
+	print("stopped hovering over %s" % (node.name))
 	hover_node = null
 
 func _on_popup_request(at_position: Vector2) -> void:
@@ -165,9 +171,10 @@ func _on_popup_request(at_position: Vector2) -> void:
 	target_popup.position = at_position + get_screen_position()
 	print("showing popup now")
 	target_popup.show()
+	print("showed popup")
 
 func _on_mood_popup_menu_id_pressed(id: int) -> void:
-	print("menu id of %s pressed" % id)
+	print("mood popup menu id pressed ", id)
 	match id:
 		0: # delete selected moods
 			for node: GraphNode in _get_selected_graph_nodes():
@@ -184,6 +191,7 @@ func _on_mood_popup_menu_id_pressed(id: int) -> void:
 				%NewNameEdit.grab_focus()
 
 func _on_transition_popup_menu_id_pressed(id: int) -> void:
+	print("popup menu id pressed ", id)
 	match id:
 		0: # delete selected transitions
 			for node: GraphNode in _get_selected_graph_nodes():
@@ -198,72 +206,63 @@ func _on_transition_popup_menu_id_pressed(id: int) -> void:
 				%NewNameEdit.grab_focus()
 
 func _on_change_name_dialog_confirmed() -> void:
+	print("change name dialog confirmed")
 	var new_name: String = %NewNameEdit.text
 
-	if not name_change_node:
-		return 
-
 	if new_name == "":
+		print("* new name is no good")
 		name_change_node = null
 		return
 
 	if new_mood:
-		undo_redo.create_action("Created New Mood")
-
-		undo_redo.add_do_method(self, "add_child", name_change_node)
-		undo_redo.add_do_property(name_change_node, "owner", self)
-		undo_redo.add_do_reference(name_change_node)
-
-		undo_redo.add_do_method(target_machine, "add_child", new_mood)
-		undo_redo.add_do_property(new_mood, "owner", target_machine)
-		undo_redo.add_do_reference(new_mood)
-
-		undo_redo.add_undo_method(target_machine, "remove_child", new_mood)
-		undo_redo.add_undo_method(self, "remove_child", name_change_node)
+		print("* creating new mood")
+		new_mood.name = new_name
+		target_machine.add_child(new_mood) # triggers mood_list_changed
+		new_mood.owner = target_machine
+		target_machine.notify_property_list_changed()
+		print("* done")
 	else:
 		var parent = name_change_node.parent()
+		name_change_node.title = new_name
+		name_change_node.name = new_name
+		parent.name = new_name
 
-		undo_redo.create_action("Changed Mood from '%s' to '%s'" % [parent.name, new_name])
-		undo_redo.add_do_property(parent, "name", new_name)
-		undo_redo.add_undo_property(parent, "name", parent.name)
-
-		undo_redo.add_do_property(name_change_node, "title", new_name)
-		undo_redo.add_do_property(name_change_node, "name", new_name)
-		undo_redo.add_undo_property(name_change_node, "title", name_change_node.title)
-		undo_redo.add_undo_property(name_change_node, "name", name_change_node.name)
-
-	undo_redo.commit_action()
 	new_mood = null
 	name_change_node = null
 
 func _on_new_name_edit_text_submitted(_new_text: String) -> void:
+	print("new name edit text submitted")
 	change_name_dialog.confirmed.emit()
 
 func _on_change_name_dialog_canceled() -> void:
+	print("change name dialog canceled")
 	if new_mood: # cancel new node = remove that node
 		new_mood.queue_free()
 		name_change_node.queue_free()
 		new_mood = null
 		name_change_node = null
 
-var new_mood: Mood = null
 func _on_graph_popup_menu_id_pressed(id: int) -> void:
+	print("graph popup menu id pressed ", id)
 	match id:
 		0: # Arrange Nodes
 			arrange_nodes()
+			for graph_node: GraphNode in find_children("*", "GraphNode") as Array[GraphNode]:
+				graph_node.position_offset_changed.emit()
 		1: # Create New mood
 			var new_node_name = "New mood" % (len(find_children("New mood*")) + 1)
 			var offset: Vector2 = popup_offset + scroll_offset
 			new_mood = Mood.new()
 			new_mood.name = new_node_name
 			new_mood.set_meta("graph_position", offset)
-			name_change_node = _add_mood_to_graph(new_mood)
+			name_change_node = _add_mood_to_graph(new_mood, false)
 			%OldNameLabel.text = "<New Mood>"
 			%NewNameEdit.text = name_change_node.title
 			change_name_dialog.popup()
 			%NewNameEdit.grab_focus()
 
 func _on_pick_transition_type_dialog_confirmed() -> void:
+	print("transition type dialog confirmed")
 	var from_node = _pending_connection_request["from_node"]
 	var from_port = _pending_connection_request["from_port"]
 	var to_node = _pending_connection_request["to_node"]
@@ -286,10 +285,7 @@ func _on_pick_transition_type_dialog_confirmed() -> void:
 	var transition = type.new()
 	transition.transition_from = lhs.mood
 	transition.transition_to = rhs.mood
-	transition.name =  "%sTo%s" % [lhs.name, rhs.name]
-	
-	undo_redo.create_action("Add Transition - %s" % transition.name)
-	
+	transition.name =  "%sTo%s" % [lhs.name, rhs.name]	
 
 	var selector := (target_machine.find_children("*", "MoodSelector", false) as Array[MoodSelector]).front()
 	if selector:
@@ -302,7 +298,7 @@ func _on_pick_transition_type_dialog_confirmed() -> void:
 		transition.owner = target_machine
 		get_tree().edited_scene_root.notify_property_list_changed()
 
-	print(get_tree_string_pretty())
+	print(get_tree().edited_scene_root.get_tree_string_pretty())
 
 	EditorInterface.edit_node(transition)
 

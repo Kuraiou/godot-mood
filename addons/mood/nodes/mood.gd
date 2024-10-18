@@ -19,28 +19,7 @@ extends MoodChild
 ## When a target is assigned to an Mood, that target will propagate down explicitly to
 ## all of its child MoodScripts immediately.
 
-## If true, use the target override. otherwise, the target node
-## will be the parent's target node (if there is one).
-@export var override_parent_target: bool = false:
-	set(value):
-		# if we're turning this flag off, and our target is currently the override target
-		if override_parent_target and not value and get_parent().has_method("target"):
-			target = get_parent().target
-		override_parent_target = value
-		update_configuration_warnings()
-
-## If [param override_parent_target] is true, this will propagate as the target.
-@export var target_node_override: Node:
-	set(value):
-		target_node_override = value
-		if override_parent_target:
-			target = value
-		update_configuration_warnings()
-
 #region Signals
-
-## A tool signal for when the name of the mood is changed.
-signal name_changed(old_name: StringName)
 
 ## Emitted when the mood is entered.
 signal mood_entered(previous_mood: Mood)
@@ -71,20 +50,10 @@ func _enter_tree():
 
 ## when a child comes in under us, if we can assign their mood, let's do so.
 func _on_child_entered_tree(node: Node) -> void:
-	if node is MoodChild:
+	if "mood" in node:
 		node.mood = self
 
 #endregion
-
-#region Built-In Overrides
-
-func set_name(value: String) -> void:
-	if name == value:
-		return
-	
-	var old_name: StringName = name
-	super(value)
-	name_changed.emit(old_name)
 
 #region Overridable Methods
 
@@ -114,26 +83,16 @@ func is_current_mood() -> bool:
 
 ## Turn on processing for oneself and one's children.
 func enable() -> void:
-	set_process(true)
-	set_physics_process(true)
-	set_process_input(true)
-	set_process_unhandled_input(true)
-
-	recurse("set_process", true)
-	recurse("set_physics_process", true)
-	recurse("set_process_input", true)
-	recurse("set_process_unhandled_input", true)
+	Recursion.recurse(self, "set_process", true)
+	Recursion.recurse(self, "set_physics_process", true)
+	Recursion.recurse(self, "set_process_input", true)
+	Recursion.recurse(self, "set_process_unhandled_input", true)
 
 ## Turn off processing for oneself and one's children.
 func disable() -> void:
-	set_process(false)
-	set_physics_process(false)
-	set_process_input(false)
-	set_process_unhandled_input(false)
-
-	recurse("set_process", false)
-	recurse("set_physics_process", false)
-	recurse("set_process_input", false)
-	recurse("set_process_unhandled_input", false)
+	Recursion.recurse(self, "set_process", false)
+	Recursion.recurse(self, "set_physics_process", false)
+	Recursion.recurse(self, "set_process_input", false)
+	Recursion.recurse(self, "set_process_unhandled_input", false)
 
 #endregion
