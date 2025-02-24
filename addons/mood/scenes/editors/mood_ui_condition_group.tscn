@@ -26,7 +26,7 @@ border_width_left = 2
 border_width_right = 2
 border_width_bottom = 2
 
-[node name="MoodUiConditionGroup" type="VBoxContainer" node_paths=PackedStringArray("index_label")]
+[node name="MoodUiConditionGroup" type="VBoxContainer" node_paths=PackedStringArray("index_label", "remove_button")]
 anchors_preset = 10
 anchor_right = 1.0
 offset_right = -652.0
@@ -37,7 +37,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 0
 script = ExtResource("1_saayx")
 index_label = NodePath("HeaderContainer/HBoxContainer/HBoxContainer/IndexLabel")
-_was_removed = null
+remove_button = NodePath("HeaderContainer/HBoxContainer/RemoveGroup")
 
 [node name="HeaderContainer" type="PanelContainer" parent="."]
 layout_mode = 2
@@ -51,12 +51,6 @@ theme_override_constants/separation = 10
 [node name="HBoxContainer" type="HBoxContainer" parent="HeaderContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="Label1" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
-layout_mode = 2
-size_flags_vertical = 1
-text = "Condition Group"
-vertical_alignment = 1
 
 [node name="IndexLabel" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
 layout_mode = 2
@@ -94,16 +88,32 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_vrv5f")
 layout_mode = 2
 theme_override_constants/separation = 5
 
-[node name="MarginContainer" type="MarginContainer" parent="ConditionsContainer/VBoxContainer"]
+[node name="MarginContainer" type="CenterContainer" parent="ConditionsContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_constants/margin_top = 5
+size_flags_vertical = 3
 
-[node name="AddCondition" type="Button" parent="ConditionsContainer/VBoxContainer/MarginContainer"]
-custom_minimum_size = Vector2(200, 2.08165e-12)
+[node name="HBoxContainer" type="HBoxContainer" parent="ConditionsContainer/VBoxContainer/MarginContainer"]
 layout_mode = 2
-size_flags_horizontal = 4
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="AddPropCondition" type="Button" parent="ConditionsContainer/VBoxContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 2
 size_flags_vertical = 4
-text = "Add Condition"
+text = "Add Prop. Cond."
+
+[node name="AddSignalCondition" type="Button" parent="ConditionsContainer/VBoxContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+text = "Add Signal Cond."
+
+[node name="AddGroupConditionButton" type="Button" parent="ConditionsContainer/VBoxContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 10
+size_flags_vertical = 4
+text = "Add Group Cond."
 
 [node name="Conditions" type="VBoxContainer" parent="ConditionsContainer/VBoxContainer"]
 unique_name_in_owner = true
@@ -113,5 +123,7 @@ theme_override_constants/separation = 2
 
 [connection signal="pressed" from="HeaderContainer/HBoxContainer/RemoveGroup" to="." method="_on_remove_group_pressed"]
 [connection signal="toggled" from="ParamContainer/AndAllConditions" to="." method="_on_all_of_toggled"]
-[connection signal="pressed" from="ConditionsContainer/VBoxContainer/MarginContainer/AddCondition" to="." method="_on_add_condition_pressed"]
+[connection signal="pressed" from="ConditionsContainer/VBoxContainer/MarginContainer/HBoxContainer/AddPropCondition" to="." method="_on_add_condition_pressed"]
+[connection signal="pressed" from="ConditionsContainer/VBoxContainer/MarginContainer/HBoxContainer/AddSignalCondition" to="." method="_on_add_signal_condition_pressed"]
+[connection signal="pressed" from="ConditionsContainer/VBoxContainer/MarginContainer/HBoxContainer/AddGroupConditionButton" to="." method="_on_add_group_condition_button_pressed"]
 [connection signal="child_exiting_tree" from="ConditionsContainer/VBoxContainer/Conditions" to="." method="_on_conditions_child_exiting_tree"]

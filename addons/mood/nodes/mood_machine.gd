@@ -1,84 +1,161 @@
-@icon("res://addons/mood/icons/circles.svg")
 @tool
+@icon("res://addons/mood/icons/circles.svg")
+
+## The Finite State Machine for the Mood Plugin.[br]
+##
+## The MoodMachine should only have [class Mood] nodes as its children. Depending
+## on how you configure it, the MoodMachine will continually evaluate the
+## [class Mood] children's [class MoodCondition] children to determine which is the
+## current valid mood, then enable processing, physics processing, input, and
+## unhandled input for all children.[br]
+##
+## In this way, the "current mood" will be processed as normal by the engine,
+## while all other children are, essentially, paused.
 class_name MoodMachine extends Node
 
-## A node used to manage and process logic on [Mood] children.
+#region Constants
 
-#region Configuration (Exports)
+## used for evaluating the process mode for mood selection.
+enum ProcessMoodOn { IDLE, PHYSICS, MANUAL }
+## used to determine how to pick which mood to be in.
+enum MoodSelectionStrategy {
+	# return the first mood from children that is valid.
+	FIRST_VALID_MOOD,
+	# return the first mood from children that is valid and
+	# not the current mood.
+	FIRST_VALID_NEW_MOOD,
+	# return the first mood from children that is valid and
+	# neither the current nor the previous moodl
+	FIRST_VALID_NON_PREVIOUS_MOOD,
+	# return the last mood from children that is valid.
+	LAST_VALID_MOOD,
+	# return the last mood that is from children that are valid
+	# and not the current mood (if the current mood is the very last
+	# mood in the child list, and the penultimate mood is valid, it
+	# will pick that).
+	LAST_VALID_NEW_MOOD,
+}
+## when no moods are valid, the fallback strategy describes
+## how to change moods anyways.
+enum MoodFallbackStrategy {
+	# don't change the mood.
+	KEEP_CURRENT_MOOD,
+	# change the mood back to the initial mood.
+	FALLBACK_TO_INITIAL,
+	# change the mood back to the previous mood.
+	FALLBACK_TO_PREVIOUS,
+	# call the fallback script.
+	DEFER_TO_CALLABLE
+}
+
+#endregion
+
+#region Public Variables
 
 ## The mood to select when the machine is started, before any
 ## mood condition are evaluated.
 ## If not set, the first mood child of the machine is used.
 @export var initial_mood: Mood = null:
-	get():
-		if initial_mood:
-			return initial_mood
+	set(value):
+		if initial_mood == value:
+			return
 
-		return find_children("*", "Mood").front() as Mood
+		if previous_mood == null:
+			previous_mood = initial_mood
 
-## The main object the mood's component scripts will evaluate
+		initial_mood = value
+		update_configuration_warnings()
+
+## The main object the mood's component scripts will evaluated
 ## against. Because scripts cannot (currently) be evaluated in
 ## a dynamic context, the target is used as a reference for evaluating
-##
 @export var target: Node = null:
 	set(value):
-		# pass the target through to moods and underlying components.
-		for child in get_children():
-			if "target" in child:
-				child.target = value
-
 		if target == value:
 			return
-		
+
 		target = value
+		machine_target_changed.emit(target)
+		update_configuration_warnings()
 
-#endregion
+@export_category("Mood Selection Logic")
 
-#region Member Attributes
+## See [enum ProcessMoodOn]. When to evaluate which mood is the correct one.
+@export var process_mood_on: ProcessMoodOn = ProcessMoodOn.IDLE:
+	set(value):
+		if process_mood_on == value:
+			return
+
+		process_mood_on = value
+
+		set_process(value == ProcessMoodOn.IDLE)
+		set_physics_process(value == ProcessMoodOn.PHYSICS)
+
+## See [enum MoodSelectionStrategy]. What strategy to use to handle various
+## situations where multiple [class Mood]s might be appropriate.
+@export var mood_selection_strategy: MoodSelectionStrategy = MoodSelectionStrategy.FIRST_VALID_MOOD
+## See [enum MoodFallbackStrategy]. What strategy to use if no moods are considered valid.
+@export var mood_fallback_strategy: MoodFallbackStrategy = MoodFallbackStrategy.KEEP_CURRENT_MOOD
+## If the [member mood_fallback_strategy] is MoodFallbackStrategy.DEFER_TO_CALLABLE, this
+## is required, and is the script that will be used.[br]
+## The script must have this method signature:[br][br]
+## 
+## [code]_find_next_mood(machine: MoodMachine) -> Mood:[/code]
+@export var mood_fallback_script: Script
+
+var _current_mood: Mood = null
 
 ## The current mood node reference.
-var current_mood: Mood = null:
+var current_mood: Mood:
 	get():
-		if current_mood:
-			return current_mood
-		return initial_mood
+		if _current_mood == null:
+			_current_mood = initial_mood
+
+		return _current_mood
 	set(value):
 		# we must always have a mood.
 		if value == null:
 			return
 
-		if current_mood == value:
+		if _current_mood == value:
 			return
 			
-		mood_changing.emit(current_mood, value)
+		mood_changing.emit(_current_mood, value)
 
 		if _block_change:
 			_block_change = false
 			return
 
 		if previous_mood:
-			previous_mood._exit_mood(current_mood)
 			previous_mood.mood_exited.emit(current_mood)
 			previous_mood.disable()
 
-		previous_mood = current_mood
-		current_mood = value
+		previous_mood = _current_mood
+		_current_mood = value
 		
-		mood_changed.emit(previous_mood, current_mood)
+		mood_changed.emit(previous_mood, _current_mood)
 
-		value._enter_mood(previous_mood)
 		value.mood_entered.emit(previous_mood)
 		value.enable()
 
+## The previous mood as a node reference.
 var previous_mood: Mood = null
+
+#endregion
+
+#region Private Variables
+
 var _block_change: bool = false
+var _target: Node
 
 #endregion
 
 #region Signals
 
-## A tool signal for when a mood is added or removed.
-signal mood_list_changed(mood_mode: Mood)
+## signaled when the target of the machine is changed. Primarily for tool
+## scripts and to ensure the consistency of [member target] for all [class MoodChild]
+## children.
+signal machine_target_changed(target: Node)
 
 ## signaled when the mood changes, before the values are
 ## assigned.
@@ -90,18 +167,49 @@ signal mood_changed(previous_mood: Mood, current_mood: Mood)
 
 #endregion
 
-#region Built-In Hooks
+#region Overrides
 
-func _init():
-	child_entered_tree.connect(_on_child_entered_tree)
-	child_exiting_tree.connect(_on_child_exiting_tree)
-
+## When the machine is ready, it will call [code]_mood_machine_ready[/code]
+## on all children which define that method.
 func _ready() -> void:
-	for child in get_children():
-		_recursively_ready_children(child)
-	
-	# this will enable the initial mood and its scripts.
-	current_mood = initial_mood
+	if target == null:
+		target = get_parent()
+
+	Recursion.recurse(self, "_mood_machine_ready")
+
+func _property_can_revert(property: StringName) -> bool:
+	return property == &"initial_mood" || property == &"target"
+
+func _property_get_revert(property: StringName) -> Variant:
+	match property:
+		&"initial_mood":
+			var children := get_children()
+			var idx = children.find_custom(func(node): return node is Mood)
+			if idx != -1:
+				return children[idx]
+			return null
+		&"target":
+			return get_parent()
+		_:
+			return null
+
+func _get_configuration_warnings() -> PackedStringArray:
+	if initial_mood == null:
+		return ["Please add a Mood to this Machine!"]
+	return []
+
+## determine the next mood based on the process rules of the child
+func _process(_delta) -> void:
+	if process_mood_on != ProcessMoodOn.IDLE:
+		return
+
+	_calc_next_mood()
+
+func _physics_process(_delta) -> void:
+	if process_mood_on != ProcessMoodOn.PHYSICS:
+		return
+
+	_calc_next_mood()
 
 #endregion
 
@@ -120,52 +228,86 @@ func keep_mood() -> void:
 ## @param mood [String, Mood] the mood to change to.
 ## @return [Error] OK if the node was found, 
 func change_mood(mood: Variant) -> void:
-	var mood_mode: Mood
+	var target_mood: Mood
 
 	if mood is Mood:
-		mood_mode = mood
-		if mood_mode.machine != self:
-			push_error("Attempted to change mood for machine %s to a mood that belongs to machine %s" % [name, mood_mode.machine.name])
-			return
+		target_mood = mood
 	elif mood is String:
-		mood_mode = find_child(mood, false)
+		target_mood = find_child(mood, false)
 
-	if mood_mode:
-		current_mood = mood_mode
+	if target_mood:
+		current_mood = target_mood
 	else:
 		push_error("Attempted to go to mood %s but it is not a child mood of %s" % [mood, name])
 
 #endregion
 
-#region Signal Response Methods
-
-func _on_child_entered_tree(child: Node) -> void:
-	if "machine" in child:
-		child.machine = self
-
-	if child is Mood and is_node_ready():
-		mood_list_changed.emit(child)
-
-## When a child [Mood] node leaves the FSM, we want to reflect that change onto
-## the editor graph, so we need to emit the mood list changed signal.
-func _on_child_exiting_tree(child: Node) -> void:
-	await child.tree_exited
-
-	if "machine" in child and is_instance_valid(child):
-		# @NEEDS_TEST: moving a child from one machine to another, does it
-		# reassign properly?
-		child.machine = null
-
-#endregion
-
 #region Private Methods
 
-## From top down, call [_mood_machine_ready] on children.
-func _recursively_ready_children(child: Node) -> void:
-	if child.has_method("_mood_machine_ready"):
-		child._mood_machine_ready()
+func _calc_next_mood() -> void:
+	if Engine.is_editor_hint():
+		return
 
-	for grandchild in child.get_children():
-		_recursively_ready_children(grandchild)
+	var next_mood: Mood = _find_next_mood()
+	if next_mood:
+		change_mood(next_mood)
+
+## get the
+func _find_next_mood() -> Mood:
+	var found_moods = {}
+	var mood_found_order = []
+	var max_size = 0
+
+	var valid_children: Array[Mood] = [] as Array[Mood]
+
+	var moods := find_children("*", "Mood", false) as Array[Mood]
+
+	match mood_selection_strategy:
+		MoodSelectionStrategy.FIRST_VALID_MOOD:
+			for mood: Mood in moods:
+				var should_transition := mood.is_valid()
+				if should_transition:
+					return mood
+
+		MoodSelectionStrategy.FIRST_VALID_NEW_MOOD:
+			for mood: Mood in moods:
+				if mood == current_mood:
+					continue
+				var should_transition := mood.is_valid()
+				if should_transition:
+					return mood
+
+		MoodSelectionStrategy.LAST_VALID_MOOD:
+			moods.reverse()
+			for mood: Mood in moods:
+				if mood.is_valid():
+					return mood
+
+		MoodSelectionStrategy.LAST_VALID_NEW_MOOD:
+			moods.reverse()
+			for mood: Mood in moods:
+				if mood == current_mood:
+					continue
+
+				if mood.is_valid():
+					return mood
+
+	match mood_fallback_strategy:
+		MoodFallbackStrategy.KEEP_CURRENT_MOOD:
+			pass
+		MoodFallbackStrategy.FALLBACK_TO_INITIAL:
+			return initial_mood
+		MoodFallbackStrategy.FALLBACK_TO_PREVIOUS:
+			if previous_mood:
+				return previous_mood
+		MoodFallbackStrategy.DEFER_TO_CALLABLE:
+			if mood_fallback_script and mood_fallback_script.can_instantiate():
+				var instance = Object.new()
+				instance.set_script(mood_fallback_script)
+				return instance._find_next_mood(self)
+
+	return current_mood
 
 #endregion
+
+#region Signal Hooks

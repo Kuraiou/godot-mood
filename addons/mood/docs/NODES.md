@@ -8,6 +8,9 @@ Mood node Food node.
 
 the machine yum yum.
 
-## MoodTransition
+## MoodCondition
+
+The parent class for conditions, which are used to evaluate whether or not you should
+move to a given mood. these should be children of a mood.
 
 ## MoodSelector

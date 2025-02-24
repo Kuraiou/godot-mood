@@ -17,10 +17,10 @@ func _exit_mood(next_mood: Mood) -> void:
 
 # Fill this out for what code you want to run during idle processing when the
 # mood machine (AKA finite state machine) is in this current mood (AKA state).
-func _process(delta):
+func _process(delta: float) -> void:
 	pass
 
 # Fill this out for what code you want to run during physics processing when the
 # mood machine (AKA finite state machine) is in this current mood (AKA state).
-func _physics_process(delta):
+func _physics_process(delta: float) -> void:
 	pass

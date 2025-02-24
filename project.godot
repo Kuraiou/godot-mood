@@ -15,7 +15,7 @@ markdown_book/docs_folder="res://addons/mood/docs/"
 [application]
 
 config/name="Mood"
-run/main_scene="res://addons/mood/scenes/editors/mood_ui_group_container.tscn"
+run/main_scene="res://addons/mood/scenes/editors/mood_ui_conditions_container.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -43,8 +43,3 @@ naming/script_name_casing=2
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/mood/plugin.cfg")
-
-[mood]
-
-graph/show_mood_graph=true
-graph/auto_switch_to_graph=false

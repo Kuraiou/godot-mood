@@ -1,9 +1,26 @@
-class_name MoodConditionProperty extends MoodCondition
-
+@tool
+@icon("res://addons/mood/icons/eye-open.svg")
 ## A type of condition that evaluates whether a property or
 ## method result on an object meets a specific criteria.
+class_name MoodConditionProperty extends MoodCondition
 
 enum Operator { EQ = 0, LT = 1, LTE = 2, GT = 3, GTE = 4, NOT = 5 }
+
+## The object who owns the property.
+var _property_target: Node
+@export var property_target: Node:
+	get():
+		if _property_target == null:
+			if machine != null:
+				_property_target = machine.target
+
+		return _property_target
+	set(value):
+		if _property_target == value:
+			return
+
+		_property_target = value
+		notify_property_list_changed()
 
 ## The property we're evaluating.
 @export var property := ""
@@ -14,6 +31,24 @@ enum Operator { EQ = 0, LT = 1, LTE = 2, GT = 3, GTE = 4, NOT = 5 }
 @export var criteria: Variant = null
 @export var is_callable := false
 
+#region Overrides
+
+func _property_can_revert(property: StringName) -> bool:
+	return property == &"property_target"
+
+func _property_get_revert(property: StringName) -> Variant:
+	match property:
+		&"property_target":
+			if machine:
+				return machine.target
+			return null
+		_:
+			return null
+
+#endregion
+
+#region Public Methods
+
 ## Return whether or not an input is valid.
 ##
 ## @param input [Node, Variant] The value to compare against. If
@@ -22,18 +57,18 @@ enum Operator { EQ = 0, LT = 1, LTE = 2, GT = 3, GTE = 4, NOT = 5 }
 ##   property value.
 ## @param evaluate_nodes [bool]
 ## @return Whether or not the input is valid.
-func _is_valid(target: Node, cache: Dictionary = {}) -> bool:
+func is_valid(cache: Dictionary = {}) -> bool:
 	if property not in cache:
 		if is_callable:
-			if not target.has_method(property):
-				push_error("Expected Node %s to respond to %s but it does not" % [target.name, property])
+			if not property_target.has_method(property):
+				push_error("Expected Node %s to respond to %s but it does not" % [property_target.name, property])
 				return false
-			cache[property] = target.call(property)
+			cache[property] = property_target.call(property)
 		else:
-			if property not in target:
-				push_error("Expected Property %s to be in Node %s but it was not" % [property, target.name])
+			if property not in property_target:
+				push_error("Expected Property %s to be in Node %s but it was not" % [property, property_target.name])
 				return false
-			cache[property] = target.get(property)
+			cache[property] = property_target.get(property)
 
 	var input: Variant = cache[property]
 
@@ -52,3 +87,7 @@ func _is_valid(target: Node, cache: Dictionary = {}) -> bool:
 			return input != criteria
 	
 	return false
+
+#endregion
+
+#region Signal Hooks

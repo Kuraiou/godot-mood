@@ -1,10 +1,10 @@
-@icon("res://addons/mood/icons/check-circle.svg")
 @tool
-class_name Mood
-extends MoodChild
+@icon("res://addons/mood/icons/target.svg")
+
+class_name Mood extends MoodMachineChild
 
 ## A [Mood] is a representation of a State in a [MoodMachine], which is a Finite
-## State Machine..
+## State Machine.
 ##
 ## * the parent of a Mood must be a MoodMachine or else warning will be raised.
 ## * all Mood children of a given MoodMachine have different names.
@@ -19,6 +19,30 @@ extends MoodChild
 ## When a target is assigned to an Mood, that target will propagate down explicitly to
 ## all of its child MoodScripts immediately.
 
+#region Public Variables
+
+## the root condition for evaluating whether you should be in this mood.
+## If this is not explicitly set, will return the first [MoodCondition] child
+## (meaning multiple condition children will not do anything).
+var _root_condition: MoodCondition
+@export var root_condition: MoodCondition:
+	get():
+		if _root_condition == null:
+			var children := get_children()
+			var idx = children.find_custom(func (child): return child is MoodCondition)
+			if idx != -1:
+				_root_condition = children[idx]
+
+		return _root_condition
+	set(value):
+		if _root_condition == value:
+			return
+
+		_root_condition = value
+		notify_property_list_changed()
+
+#endregion
+
 #region Signals
 
 ## Emitted when the mood is entered.
@@ -29,48 +53,13 @@ signal mood_exited(next_mood: Mood)
 
 #endregion
 
-#region Built-In Hooks
+#region Overrides
 
-func _get_configuration_warnings():
-	var errors = super()
-
-	for child in get_children():
-		if not child.has_method("_enter_mood"):
-			errors.append("The child %s is misconfigured -- it must define `_enter_mood(previous_mood: Mood) -> void`.\nMaybe you should consider using a `MoodScript`?" % child.name)
-		if not child.has_method("_exit_mood"):
-			errors.append("The child %s is misconfigured -- it must define `_exit_mood(next_mood: Mood) -> void`.\nMaybe you should consider using a `MoodScript`?" % child.name)
-		if not "target" in child:
-			errors.append("The child %s is misconfigured -- it must have a 'target' property.\nMaybe you should consider using a `MoodScript`?" % child.name)
-
-	return errors
-
-func _enter_tree():
+func _enter_tree() -> void:
+	if machine.initial_mood == null:
+		machine.initial_mood = self
 	# by default we want to be disabled, so that the FSM can handle enabling.
 	disable()
-
-## when a child comes in under us, if we can assign their mood, let's do so.
-func _on_child_entered_tree(node: Node) -> void:
-	if "mood" in node:
-		node.mood = self
-
-#endregion
-
-#region Overridable Methods
-
-## [b]<OVERRIDABLE>[/b][br][br]
-## Called by a [MoodMachine] when the mood is entered.
-## Called *before* the signal is emitted and *before* enable() is called.
-## [param previous_mood] is the name of the previous [b]StateNode[/b].
-@warning_ignore("unused_parameter")
-func _enter_mood(previous_mood: Mood) -> void:
-	pass
-
-## [b]<OVERRIDABLE>[/b][br][br]
-## Called by a [MoodMachine] when the mood is exited.
-## [param next_mood] is the name of the next [b]StateNode[/b].
-@warning_ignore("unused_parameter")
-func _exit_mood(next_mood: Mood) -> void:
-	pass
 
 #endregion
 
@@ -80,6 +69,15 @@ func _exit_mood(next_mood: Mood) -> void:
 ## a [MoodMachine].
 func is_current_mood() -> bool:
 	return machine.current_mood == self
+
+## Returns [code]true[/code] if all child [[MoodCondition]] nodes return
+## true for [[MoodCondition#_is_valid]].
+func is_valid() -> bool:
+	if not is_instance_valid(root_condition):
+		return false
+
+	var cache := {}
+	return root_condition.is_valid(cache)
 
 ## Turn on processing for oneself and one's children.
 func enable() -> void:
@@ -96,3 +94,5 @@ func disable() -> void:
 	Recursion.recurse(self, "set_process_unhandled_input", false)
 
 #endregion
+
+#region Signal Hooks

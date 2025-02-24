@@ -1,12 +1,16 @@
+@tool
+@icon("res://addons/mood/icons/circle-question.svg")
 class_name MoodCondition extends MoodChild
 
-## Return whether or not an input is valid.
+func _enter_tree():
+	if mood != null and mood.root_condition == null:
+		mood.root_condition = self
+
+## Return whether or not an input is valid. This must be
+## overridden in a child class.
 ##
-## @param input [Node, Variant] The value to compare against. If
-##   [evaluate_nodes] is true, then if the input is a Node and has
-##   the [property] then the input will be overridden with that
-##   property value.
-## @param evaluate_nodes [bool]
+## @param cache [Dictionary] an optional cache used to avoid
+##   recalculating values across many moods/conditions.
 ## @return Whether or not the input is valid.
-func _is_valid(target: Node, cache: Dictionary = {}) -> bool:
+func is_valid(cache: Dictionary = {}) -> bool:
 	return false

@@ -1,29 +1,37 @@
+@tool
+## A condition which becomes valid when a signal from the
+## [signal_target] (defaulting to the machine target) is
+## received.[br]
+##
 class_name MoodConditionSignal extends MoodCondition
 
-## A condition which connects to signals.
+#region Public Variables
 
+var _signal_target: Node
 @export var signal_target: Node:
 	get():
-		if not signal_target:
-			return target
-		return signal_target
+		if _signal_target == null:
+			if machine != null:
+				signal_target = machine.target
+		return _signal_target
 	set(value):
-		if signal_target == value:
+		if _signal_target == value:
 			return
 		
-		if signal_target:
+		if _signal_target:
 			for trigger in signal_triggers:
-				if signal_target.is_connected(trigger, _receive_signal):
-					signal_target.disconnect(trigger, _receive_signal)
+				if !_signal_target.has_signal(trigger):
+					continue
 
-		signal_target = value
+				if _signal_target.is_connected(trigger, _receive_signal):
+					_signal_target.disconnect(trigger, _receive_signal)
 
-		signal_target.ready.connect(_refresh_signals)
+		_signal_target = value
 		_refresh_signals()
 
 ## A list of signals by name to associate with the
 ## signal target.
-@export var signal_triggers: Array[StringName] = [] as Array[StringName]:
+@export var signal_triggers: Array[String] = [] as Array[String]:
 	set(value):
 		if signal_triggers == value:
 			return
@@ -31,6 +39,9 @@ class_name MoodConditionSignal extends MoodCondition
 		# clear triggers so we don't have hanging triggers
 		if signal_target:
 			for trigger in signal_triggers:
+				if !_signal_target.has_signal(trigger):
+					continue
+
 				if signal_target.is_connected(trigger, _receive_signal):
 					signal_target.disconnect(trigger, _receive_signal)
 
@@ -49,7 +60,8 @@ class_name MoodConditionSignal extends MoodCondition
 ## once the transition occurs.
 @export var clear_on_transition := true
 ## If set, the received signal flag (when true) will be set to false
-## if the signal is received this many times.
+## if the signal is received this many times, even if the machine
+## has not yet transitioned to the condition's mood.
 @export var clear_after_count := 0
 ## If set, start the timer when signal is received and clear
 ## when the timer is done.
@@ -58,8 +70,64 @@ class_name MoodConditionSignal extends MoodCondition
 ## when the timer is done.
 @export var clear_after_signal_flag_set_timer: Timer
 
+#endregion
+
+#region Private Variables
+
 var _received_signal := false
 var _received_count := 0
+
+#endregion
+
+#region Overrides
+
+func _get_configuration_warnings() -> PackedStringArray:
+	var res := []
+	if _signal_target != null and len(signal_triggers) > 0:
+		pass
+	return res
+
+func _property_can_revert(property: StringName) -> bool:
+	return property == &"signal_target"
+
+func _property_get_revert(property: StringName) -> Variant:
+	match property:
+		&"signal_target":
+			if machine:
+				return machine.target
+			return null
+		_:
+			return null
+
+#endregion
+
+#region Public Methods
+
+## Whether or not the condition is valid. Used for transitioning state.
+func is_valid(cache: Dictionary = {}) -> bool:
+	if _received_signal and clear_on_transition:
+		_received_signal = false
+
+	return _received_signal
+
+#endregion
+
+#region Private Methods
+
+func _schedule_timer(timer: Timer) -> void:
+	timer.start()
+	await timer.timeout
+
+## ensure that all configured signals are wired up correctly.
+func _refresh_signals() -> void:
+	if not is_instance_valid(signal_target):
+		return
+
+	for trigger in signal_triggers:
+		if not signal_target.is_connected(trigger, _receive_signal):
+			signal_target.connect(trigger, _receive_signal)
+
+#endregion
 
 #region Signal Hooks
 
@@ -72,7 +140,7 @@ func _receive_signal() -> void:
 	if _received_count >= trigger_after_n_times:
 		if trigger_delay_timer:
 			await _schedule_timer(trigger_delay_timer)
-			
+
 		_received_signal = true
 
 		if clear_after_signal_flag_set_timer:
@@ -82,29 +150,3 @@ func _receive_signal() -> void:
 	if clear_after_signal_received_timer:
 		await _schedule_timer(clear_after_signal_received_timer)
 		_received_signal = false
-
-#endregion
-
-#region Private Functions
-
-func _schedule_timer(timer: Timer) -> void:
-	timer.start()
-	await timer.timeout
-
-## Whether or not the condition is valid. Used for transitioning state.
-func _is_valid(target: Node, cache: Dictionary = {}) -> bool:
-	if _received_signal and clear_on_transition:
-		_received_signal = false
-
-	return _received_signal
-
-## ensure that all configured signals are wired up correctly.
-func _refresh_signals() -> void:
-	if not is_instance_valid(signal_target):
-		return
-
-	for trigger in signal_triggers:
-		if not signal_target.is_connected(trigger, _receive_signal):
-			signal_target.connect(trigger, _receive_signal)
-
-#endregion
