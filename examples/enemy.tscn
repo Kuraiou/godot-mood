@@ -1,0 +1,58 @@
+[gd_scene load_steps=9 format=3 uid="uid://ddv64oa3iwhur"]
+
+[ext_resource type="Script" uid="uid://dojhtlp310d5d" path="res://addons/mood/nodes/mood_machine.gd" id="1_kruak"]
+[ext_resource type="Script" uid="uid://0re6tuqk5egu" path="res://addons/mood/nodes/mood.gd" id="2_m547o"]
+[ext_resource type="Script" uid="uid://dvqibu4gyqh8j" path="res://addons/mood/nodes/conditions/mood_condition_group.gd" id="3_ckukk"]
+[ext_resource type="Script" uid="uid://b448uxn08i6o1" path="res://addons/mood/nodes/conditions/mood_condition_property.gd" id="4_qroy4"]
+[ext_resource type="Script" uid="uid://dybwlfxa5kmou" path="res://addons/mood/nodes/scripts/mood_method_delegator.gd" id="5_fcnx0"]
+[ext_resource type="Script" uid="uid://bapwnus850ael" path="res://addons/mood/nodes/conditions/mood_condition_signal.gd" id="5_vwjih"]
+[ext_resource type="Script" uid="uid://cflf7kbpb0auk" path="res://addons/mood/nodes/conditions/mood_condition_entry_whitelist.gd" id="7_jtvon"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_sk223"]
+
+[node name="Enemy" type="CharacterBody2D"]
+
+[node name="MoodMachine" type="Node" parent="." node_paths=PackedStringArray("initial_mood", "target")]
+script = ExtResource("1_kruak")
+initial_mood = NodePath("Happy")
+target = NodePath("..")
+
+[node name="Happy" type="Node" parent="MoodMachine" node_paths=PackedStringArray("root_condition")]
+script = ExtResource("2_m547o")
+root_condition = NodePath("ShouldBeHappy")
+
+[node name="ShouldBeHappy" type="Node" parent="MoodMachine/Happy"]
+script = ExtResource("3_ckukk")
+
+[node name="IsVisible" type="Node" parent="MoodMachine/Happy/ShouldBeHappy" node_paths=PackedStringArray("property_target")]
+script = ExtResource("4_qroy4")
+property_target = NodePath("../../../..")
+property = "visible"
+criteria = true
+
+[node name="Signal Condition 2" type="Node" parent="MoodMachine/Happy/ShouldBeHappy" node_paths=PackedStringArray("signal_target", "clear_after_signal_received_timer")]
+script = ExtResource("5_vwjih")
+signal_target = NodePath("../..")
+signal_triggers = Array[String](["renamed"])
+trigger_after_n_times = 2
+clear_after_signal_received_timer = NodePath("../../../../--- Timers ---/HappySignalReceiveTimer")
+
+[node name="MoodMethodDelegator" type="Node" parent="MoodMachine/Happy"]
+script = ExtResource("5_fcnx0")
+
+[node name="Mood" type="Node" parent="MoodMachine" node_paths=PackedStringArray("root_condition")]
+script = ExtResource("2_m547o")
+root_condition = NodePath("MoodConditionEntryWhitelist")
+metadata/_custom_type_script = ExtResource("2_m547o")
+
+[node name="MoodConditionEntryWhitelist" type="Node" parent="MoodMachine/Mood"]
+script = ExtResource("7_jtvon")
+metadata/_custom_type_script = ExtResource("7_jtvon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_sk223")
+
+[node name="--- Timers ---" type="Node" parent="."]
+
+[node name="HappySignalReceiveTimer" type="Timer" parent="--- Timers ---"]
+wait_time = 2.0

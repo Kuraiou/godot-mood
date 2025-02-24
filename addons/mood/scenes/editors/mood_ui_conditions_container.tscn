@@ -1,0 +1,28 @@
+[gd_scene load_steps=2 format=3 uid="uid://dx0qsxgbfuwg7"]
+
+[ext_resource type="Script" path="res://addons/mood/scenes/editors/mood_ui_conditions_container.gd" id="1_qpwal"]
+
+[node name="MoodUiConditionsContainer" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_qpwal")
+
+[node name="AddGroupButton" type="Button" parent="."]
+unique_name_in_owner = true
+z_index = 1
+layout_mode = 2
+size_flags_vertical = 0
+tooltip_text = "Add a Condition Group."
+text = "Add Condition Group"
+
+[node name="Groups" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[connection signal="pressed" from="AddGroupButton" to="." method="_on_add_group_button_pressed"]
+[connection signal="child_exiting_tree" from="Groups" to="." method="_on_groups_child_exiting_tree"]
