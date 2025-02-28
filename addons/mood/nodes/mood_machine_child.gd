@@ -48,10 +48,26 @@ var target: Node:
 		_target = val
 		notify_property_list_changed()
 
-
 #endregion
 
 #region Overrides
+
+func _get_configuration_warnings() -> PackedStringArray:
+	var transition_targets := {} as Dictionary[String, bool]
+	var errors := [] as PackedStringArray
+
+	for transition: Node in find_children("*", "MoodTransition", false):
+		if not is_instance_valid(transition.to_mood):
+			continue
+
+		var transition_to := transition.to_mood.name as String
+		if transition_targets.get(transition_to, false):
+			errors.append("%s has multiple Transitions to it, behavior may be unexpected." % transition_to)
+		else:
+			transition_targets[transition_to] = true
+	
+	return errors
+
 #endregion
 
 #region Private Methods

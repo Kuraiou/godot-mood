@@ -2,10 +2,6 @@
 @icon("res://addons/mood/icons/circle-question.svg")
 class_name MoodCondition extends MoodChild
 
-func _enter_tree():
-	if mood != null and mood.root_condition == null:
-		mood.root_condition = self
-
 ## Return whether or not an input is valid. This must be
 ## overridden in a child class.
 ##

@@ -21,26 +21,6 @@ class_name Mood extends MoodMachineChild
 
 #region Public Variables
 
-## the root condition for evaluating whether you should be in this mood.
-## If this is not explicitly set, will return the first [MoodCondition] child
-## (meaning multiple condition children will not do anything).
-var _root_condition: MoodCondition
-@export var root_condition: MoodCondition:
-	get():
-		if _root_condition == null:
-			var children := get_children()
-			var idx = children.find_custom(func (child): return child is MoodCondition)
-			if idx != -1:
-				_root_condition = children[idx]
-
-		return _root_condition
-	set(value):
-		if _root_condition == value:
-			return
-
-		_root_condition = value
-		notify_property_list_changed()
-
 #endregion
 
 #region Signals
@@ -69,15 +49,6 @@ func _enter_tree() -> void:
 ## a [MoodMachine].
 func is_current_mood() -> bool:
 	return machine.current_mood == self
-
-## Returns [code]true[/code] if all child [[MoodCondition]] nodes return
-## true for [[MoodCondition#_is_valid]].
-func is_valid() -> bool:
-	if not is_instance_valid(root_condition):
-		return false
-
-	var cache := {}
-	return root_condition.is_valid(cache)
 
 ## Turn on processing for oneself and one's children.
 func enable() -> void:

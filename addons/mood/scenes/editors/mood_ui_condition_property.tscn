@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://c8ha2ga6v0w3a"]
 
-[ext_resource type="Script" path="res://addons/mood/scenes/editors/mood_ui_condition_property.gd" id="1_ayhqb"]
+[ext_resource type="Script" uid="uid://btiqt3wa6p28e" path="res://addons/mood/scenes/editors/mood_ui_condition_property.gd" id="1_ayhqb"]
 [ext_resource type="Texture2D" uid="uid://c0ipnppxufc8u" path="res://addons/mood/icons/trash.svg" id="2_76o34"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o3bqq"]
@@ -158,6 +158,40 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 
+[node name="NodeEdit" type="VBoxContainer" parent="ConditionContainer/HBoxContainer/PropEditContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="SelectedNodeLabel" type="HBoxContainer" parent="ConditionContainer/HBoxContainer/PropEditContainer/NodeEdit"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="SelectedNodeIcon" type="TextureRect" parent="ConditionContainer/HBoxContainer/PropEditContainer/NodeEdit/SelectedNodeLabel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+expand_mode = 1
+
+[node name="SelectedNodeName" type="Label" parent="ConditionContainer/HBoxContainer/PropEditContainer/NodeEdit/SelectedNodeLabel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NodeEditButton" type="Button" parent="ConditionContainer/HBoxContainer/PropEditContainer/NodeEdit"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "Assign..."
+
 [node name="PlaceholderEdit" type="Label" parent="ConditionContainer/HBoxContainer/PropEditContainer"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -172,3 +206,4 @@ text = "<Selected Editor>"
 [connection signal="text_changed" from="ConditionContainer/HBoxContainer/PropEditContainer/StringEdit" to="." method="_on_string_edit_text_changed"]
 [connection signal="item_selected" from="ConditionContainer/HBoxContainer/PropEditContainer/EnumEdit" to="." method="_on_enum_edit_item_selected"]
 [connection signal="toggled" from="ConditionContainer/HBoxContainer/PropEditContainer/BoolEdit" to="." method="_on_bool_edit_toggled"]
+[connection signal="pressed" from="ConditionContainer/HBoxContainer/PropEditContainer/NodeEdit/NodeEditButton" to="." method="_on_node_edit_pressed"]

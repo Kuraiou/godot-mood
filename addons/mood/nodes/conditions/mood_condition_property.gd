@@ -29,6 +29,8 @@ var _property_target: Node
 ## The value we're comparing against. Because it's variant,
 ## we have to do some shenanigans in the inspector plugin.
 @export var criteria: Variant = null
+@export var is_node_path := false
+@export var node_path_root: Node
 @export var is_callable := false
 
 #region Overrides
@@ -68,23 +70,28 @@ func is_valid(cache: Dictionary = {}) -> bool:
 			if property not in property_target:
 				push_error("Expected Property %s to be in Node %s but it was not" % [property, property_target.name])
 				return false
+
 			cache[property] = property_target.get(property)
 
 	var input: Variant = cache[property]
 
+	var resolved_criteria = criteria
+	if is_node_path and node_path_root:
+		resolved_criteria = node_path_root.get_node(criteria)
+
 	match comparator:
 		Operator.EQ:
-			return input == criteria
+			return input == resolved_criteria
 		Operator.LT:
-			return input < criteria
+			return input < resolved_criteria
 		Operator.LTE:
-			return input <= criteria
+			return input <= resolved_criteria
 		Operator.GT:
-			return input > criteria
+			return input > resolved_criteria
 		Operator.GTE:
-			return input >= criteria
+			return input >= resolved_criteria
 		Operator.NOT:
-			return input != criteria
+			return input != resolved_criteria
 	
 	return false
 

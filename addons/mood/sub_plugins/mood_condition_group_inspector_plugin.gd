@@ -4,7 +4,6 @@ class_name MoodConditionGroupInspectorPlugin extends EditorInspectorPlugin
 var _condition_container: CanvasItem
 
 func _can_handle(object: Object) -> bool:
-	var res := MoodEditors.has_editor(object as Node)
 	return MoodEditors.has_editor(object as Node)
 
 func _parse_begin(object: Object) -> void:
@@ -15,6 +14,7 @@ func _parse_begin(object: Object) -> void:
 
 	var editor := MoodEditors.get_editor(object as Node)
 	if not editor:
+		print("no editor")
 		return
 
 	if "remove_button" in editor:
@@ -25,6 +25,9 @@ func _parse_begin(object: Object) -> void:
 	
 	if "condition" in editor and object is MoodCondition:
 		editor.condition = object
+
+	if "transition" in editor and object is MoodTransition:
+		editor.transition = object
 
 	_condition_container = editor
 	add_custom_control(_condition_container)

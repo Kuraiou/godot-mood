@@ -4,7 +4,7 @@ extends VBoxContainer
 #region Constants
 
 const VALID_TYPES := [
-	TYPE_STRING, TYPE_STRING_NAME, TYPE_INT, TYPE_FLOAT, TYPE_BOOL
+	TYPE_STRING, TYPE_STRING_NAME, TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_OBJECT, TYPE_NODE_PATH
 ]
 const METHOD_SELECTOR_SCENE := preload("res://addons/mood/scenes/editors/popups/mood_ui_method_selector.tscn")
 
@@ -47,7 +47,6 @@ const COLOR_DESELECTED := Color(0x7F7F7FFF)
 #
 #Note: The dictionaries of args and return are formatted identically to the results of get_property_list(), although not all entries are used.
 
-
 		if is_node_ready():
 			_update_property_editor()
 		elif not ready.is_connected(_update_property_editor):
@@ -64,6 +63,7 @@ const COLOR_DESELECTED := Color(0x7F7F7FFF)
 var _properties_by_name: Dictionary = {}
 var _methods_by_name: Dictionary = {}
 var _method_selector: AcceptDialog
+var _valid_node_types := [] as Array[StringName]
 
 #endregion
 
@@ -102,9 +102,7 @@ func _update_label() -> void:
 	index_label.text = condition.name
 
 func _update_property_editor() -> void:
-	print("in _update_property_editor")
 	if condition.property == "":
-		print("property is empty")
 		%PropertySelectorButton.text = "Choose Property"
 		%MethodSelectorButton.text = "Choose Method"
 		%SelectedProperty.text = "Select A Property..."
@@ -135,6 +133,14 @@ func _update_property_editor() -> void:
 		prop = _properties_by_name.get(condition.property, {})
 
 	match prop.get("type", null):
+		TYPE_OBJECT:
+			_valid_node_types = [prop["class_name"]]
+			current_editor = %NodeEdit
+			_on_node_edit_confirmed(condition.criteria)
+		TYPE_NODE_PATH:
+			_valid_node_types = prop["hint_string"].split(",")
+			current_editor = %NodeEdit
+			_on_node_edit_confirmed(condition.criteria)
 		TYPE_BOOL:
 			current_editor = %BoolEdit
 			current_editor.button_pressed = !!condition.criteria
@@ -223,4 +229,41 @@ func _on_bool_edit_toggled(toggled_on: bool) -> void:
 
 func _on_remove_condition_button_pressed() -> void:
 	_was_removed = true
+	condition.queue_free.call_deferred()
 	queue_free.call_deferred()
+
+func _on_node_edit_pressed() -> void:
+	var selected: Node
+	if condition.criteria and condition.node_path_root:
+		selected = condition.node_path_root.get_node(condition.criteria) as Node
+	else:
+		selected = null
+	EditorInterface.popup_node_selector(_on_node_edit_confirmed, _valid_node_types, selected)
+
+func _on_node_edit_confirmed(node_path: NodePath) -> void:
+	if node_path:
+		var target_node := get_tree().edited_scene_root.get_node(node_path)
+		if is_instance_valid(target_node):
+			%SelectedNodeLabel.show()
+
+			condition.criteria = node_path
+			condition.is_node_path = true
+			condition.node_path_root = get_tree().edited_scene_root
+
+			var local_node_script = target_node.get_script()
+			var icon_path
+			if local_node_script:
+				icon_path = LocalClassFunctions.get_icon_path(local_node_script.get_global_name())
+
+			if icon_path:
+				%SelectedNodeIcon.texture = load(icon_path) as Texture2D
+			else:
+				%SelectedNodeIcon.texture = EditorInterface.get_editor_theme().get_icon(target_node.get_class(), "EditorIcons")
+
+			%SelectedNodeName.text = node_path
+			
+	else:
+		condition.criteria = null
+		condition.is_node_path = false
+		condition.node_path_root = null
+		%SelectedNodeLabel.hide()

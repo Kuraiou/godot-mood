@@ -22,28 +22,26 @@ enum MoodSelectionStrategy {
 	# return the first mood from children that is valid.
 	FIRST_VALID_MOOD,
 	# return the first mood from children that is valid and
-	# not the current mood.
-	FIRST_VALID_NEW_MOOD,
-	# return the first mood from children that is valid and
-	# neither the current nor the previous moodl
+	# neither the current nor the previous mood.
 	FIRST_VALID_NON_PREVIOUS_MOOD,
 	# return the last mood from children that is valid.
 	LAST_VALID_MOOD,
 	# return the last mood that is from children that are valid
-	# and not the current mood (if the current mood is the very last
-	# mood in the child list, and the penultimate mood is valid, it
-	# will pick that).
-	LAST_VALID_NEW_MOOD,
+	# and not the previous mood
+	LAST_VALID_NON_PREVIOUS_MOOD,
 }
+
 ## when no moods are valid, the fallback strategy describes
 ## how to change moods anyways.
 enum MoodFallbackStrategy {
 	# don't change the mood.
 	KEEP_CURRENT_MOOD,
-	# change the mood back to the initial mood.
-	FALLBACK_TO_INITIAL,
-	# change the mood back to the previous mood.
-	FALLBACK_TO_PREVIOUS,
+	# re-evaluate previous->current transition. If it's no longer valid, change
+	# the mood back to the initial mood
+	RE_EVALUATE_AND_FALLBACK_TO_INITIAL,
+	# re-evaluate previous->current transition. If it's no longer valid, change
+	# the mood back to the initial mood.
+	RE_EVALUATE_AND_FALLBACK_TO_PREVIOUS,
 	# call the fallback script.
 	DEFER_TO_CALLABLE
 }
@@ -254,52 +252,52 @@ func _calc_next_mood() -> void:
 
 ## get the
 func _find_next_mood() -> Mood:
-	var found_moods = {}
-	var mood_found_order = []
-	var max_size = 0
-
-	var valid_children: Array[Mood] = [] as Array[Mood]
-
-	var moods := find_children("*", "Mood", false) as Array[Mood]
+	var transitions := current_mood.find_children("*", "MoodTransition", false) as Array[MoodTransition]
 
 	match mood_selection_strategy:
 		MoodSelectionStrategy.FIRST_VALID_MOOD:
-			for mood: Mood in moods:
-				var should_transition := mood.is_valid()
-				if should_transition:
-					return mood
+			for transition: MoodTransition in transitions:
+				if transition.is_valid():
+					return transition.to_mood
 
-		MoodSelectionStrategy.FIRST_VALID_NEW_MOOD:
-			for mood: Mood in moods:
-				if mood == current_mood:
+		MoodSelectionStrategy.FIRST_VALID_NON_PREVIOUS_MOOD:
+			for transition: MoodTransition in transitions:
+				if transition.to_mood == previous_mood:
 					continue
-				var should_transition := mood.is_valid()
-				if should_transition:
-					return mood
+
+				if transition.is_valid():
+					return transition.to_mood
 
 		MoodSelectionStrategy.LAST_VALID_MOOD:
-			moods.reverse()
-			for mood: Mood in moods:
-				if mood.is_valid():
-					return mood
+			transitions.reverse()
+			for transition: MoodTransition in transitions:
+				if transition.is_valid():
+					return transition.to_mood
 
-		MoodSelectionStrategy.LAST_VALID_NEW_MOOD:
-			moods.reverse()
-			for mood: Mood in moods:
-				if mood == current_mood:
+		MoodSelectionStrategy.LAST_VALID_NON_PREVIOUS_MOOD:
+			transitions.reverse()
+			for transition: MoodTransition in transitions:
+				if transition.to_mood == previous_mood:
 					continue
 
-				if mood.is_valid():
-					return mood
+				if transition.is_valid():
+					return transition.to_mood
 
 	match mood_fallback_strategy:
 		MoodFallbackStrategy.KEEP_CURRENT_MOOD:
 			pass
-		MoodFallbackStrategy.FALLBACK_TO_INITIAL:
-			return initial_mood
-		MoodFallbackStrategy.FALLBACK_TO_PREVIOUS:
-			if previous_mood:
-				return previous_mood
+		MoodFallbackStrategy.RE_EVALUATE_AND_FALLBACK_TO_INITIAL:
+			for transition_node: MoodTransition in (previous_mood.find_children("*", "MoodTransition", false) as Array[MoodTransition]):
+				if transition_node.to_mood == current_mood:
+					if !transition_node.is_valid():
+						return initial_mood
+					break
+		MoodFallbackStrategy.RE_EVALUATE_AND_FALLBACK_TO_PREVIOUS:
+			for transition_node: MoodTransition in (previous_mood.find_children("*", "MoodTransition", false) as Array[MoodTransition]):
+				if transition_node.to_mood == current_mood:
+					if !transition_node.is_valid():
+						return previous_mood
+					break
 		MoodFallbackStrategy.DEFER_TO_CALLABLE:
 			if mood_fallback_script and mood_fallback_script.can_instantiate():
 				var instance = Object.new()

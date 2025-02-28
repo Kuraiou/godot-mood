@@ -1,13 +1,14 @@
 @tool
 class_name MoodEditors extends Object
 
-static var ConditionsContainer: PackedScene = preload("res://addons/mood/scenes/editors/mood_ui_conditions_container.tscn")
+static var TransitionsContainer: PackedScene = preload("res://addons/mood/scenes/editors/mood_ui_transitions_container.tscn")
 static var ConditionGroup: PackedScene = preload("res://addons/mood/scenes/editors/mood_ui_condition_group.tscn")
 static var ConditionProperty: PackedScene = preload("res://addons/mood/scenes/editors/mood_ui_condition_property.tscn")
 static var ConditionSignal: PackedScene = preload("res://addons/mood/scenes/editors/mood_ui_condition_signal.tscn")
 
 static var type_scene_list := {
-	"Mood": MoodEditors.ConditionsContainer,
+	"Mood": MoodEditors.TransitionsContainer,
+	"MoodTransition": MoodEditors.ConditionGroup,
 	"MoodConditionGroup": MoodEditors.ConditionGroup,
 	"MoodConditionProperty": MoodEditors.ConditionProperty,
 	"MoodConditionSignal": MoodEditors.ConditionSignal
@@ -16,7 +17,8 @@ static var type_scene_list := {
 static var field_skips: Dictionary[String, Array] = {
 	"Mood": [],
 	"MoodConditionGroup": ["and_all_conditions"],
-	"MoodConditionProperty": ["property", "comparator", "criteria", "is_callable"],
+	"MoodTransition": ["and_all_conditions"],
+	"MoodConditionProperty": ["property", "comparator", "criteria", "is_callable", "is_node_path", "node_path_root"],
 	"MoodConditionSignal": ["signal_triggers"]
 }
 
@@ -34,7 +36,9 @@ static func has_editor(node: Node) -> bool:
 	if not script:
 		return false
 
-	return script.get_global_name() in type_scene_list
+	var script_name = script.get_global_name()
+
+	return script_name in type_scene_list
 
 # only call after checking with has_editor!
 static func get_editor(node: Node) -> CanvasItem:
