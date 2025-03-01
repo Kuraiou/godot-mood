@@ -21,7 +21,6 @@ class_name MoodConditionGroup extends MoodCondition
 
 var _conditions: Array[MoodCondition]
 func get_conditions(use_cache: bool = true) -> Array[MoodCondition]:
-	print("getting conditions")
 	use_cache = use_cache and !Engine.is_editor_hint()
 
 	if use_cache and _conditions != null:
