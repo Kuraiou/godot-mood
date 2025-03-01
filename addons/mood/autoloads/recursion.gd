@@ -1,4 +1,4 @@
-class_name Recursion extends Object
+extends Node
 
 static func __get_fn(t: Object, m: Variant) -> Callable:
 	if m is Callable:
@@ -19,7 +19,7 @@ static func __execute_fn(fn: Callable, varargs: Array, deferred: bool) -> void:
 		fn.callv(varargs)
 
 ## Find a parent of a specific class type.
-static func find_parent(node: Node, parent_class: Variant) -> Node:
+static func find_parent_recursively(node: Node, parent_class: Variant) -> Node:
 	var parent = node.get_parent()
 
 	while parent != null:
@@ -41,10 +41,10 @@ static func recurse(node: Node, method: Variant = null, varargs: Variant = [], d
 	# depth first = call on self, then call on children
 	# breadth first = call on children, then call on self
 	if depth_first:
-		Recursion.__execute_fn(Recursion.__get_fn(node, method), varargs, deferred)
+		__execute_fn(__get_fn(node, method), varargs, deferred)
 
 	for child in node.get_children():
-		Recursion.recurse(child, method, varargs, deferred, depth_first)
+		recurse(child, method, varargs, deferred, depth_first)
 
 	if not depth_first:
-		Recursion.__execute_fn(Recursion.__get_fn(node, method), varargs, deferred)
+		__execute_fn(__get_fn(node, method), varargs, deferred)

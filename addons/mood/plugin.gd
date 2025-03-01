@@ -6,6 +6,8 @@ extends EditorPlugin
 const INSPECTOR_CONDITION_GROUP_SCRIPT = preload("res://addons/mood/sub_plugins/mood_condition_group_inspector_plugin.gd")
 
 const CUSTOM_PROPERTIES: Dictionary = {
+	"input_tracking_exact_match": {"category": "input", "type": TYPE_BOOL, "default": true},
+	"input_echo_delay_sec": {"category": "input", "type": TYPE_FLOAT, "default": 0.00},
 }
 
 #endregion
@@ -40,6 +42,9 @@ func _enable_plugin() -> void:
 		ProjectSettings.set_initial_value(prop_name, prop_def["default"])
 		ProjectSettings.set_as_basic(prop_name, !prop_def.has("advanced"))
 
+	add_autoload_singleton("LocalClassFunctions", "res://addons/mood/autoloads/local_class_functions.gd")
+	add_autoload_singleton("Recursion", "res://addons/mood/autoloads/recursion.gd")
+	add_autoload_singleton("InputTracker", "res://addons/mood/autoloads/input_tracker.gd")
 
 func _disable_plugin() -> void:
 	for config_name in CUSTOM_PROPERTIES:
@@ -47,6 +52,10 @@ func _disable_plugin() -> void:
 		var prop_name := "mood/%s/%s" % [def.get("category", "config"), config_name]
 		if ProjectSettings.has_setting(prop_name):
 			ProjectSettings.clear(prop_name)
+
+	remove_autoload_singleton("LocalClassFunctions")
+	remove_autoload_singleton("Recursion")
+	remove_autoload_singleton("InputTracker")
 
 func _enter_tree() -> void:	
 	condition_inspector_instance = INSPECTOR_CONDITION_GROUP_SCRIPT.new()

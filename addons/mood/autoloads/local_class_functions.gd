@@ -1,4 +1,4 @@
-class_name LocalClassFunctions extends Object
+extends Node
 
 #region Constants
 
