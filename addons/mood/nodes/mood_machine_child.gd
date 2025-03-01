@@ -14,7 +14,7 @@ var _machine: MoodMachine = null
 var machine: MoodMachine:
 	get():
 		if _machine == null:
-			machine = Recursion.find_parent(self, MoodMachine)
+			machine = Recursion.find_parent_recursively(self, MoodMachine)
 
 		return _machine
 	set(val):

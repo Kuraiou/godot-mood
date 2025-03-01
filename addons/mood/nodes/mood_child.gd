@@ -18,7 +18,7 @@ var _mood: Mood = null
 var mood: Mood:
 	get():
 		if _mood == null:
-			mood = Recursion.find_parent(self, Mood)
+			mood = Recursion.find_parent_recursively(self, Mood)
 		return _mood
 	set(value):
 		if _mood == value:

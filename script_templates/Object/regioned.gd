@@ -3,7 +3,7 @@
 # meta-default: true
 # meta-space-indent: 4
 
-extends Object
+class_name _CLASS_ extends _BASE_
 
 #region Constants
 ## put your const vars here.
