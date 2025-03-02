@@ -1,3 +1,4 @@
+@tool
 class_name MoodConditionInput extends MoodCondition
 
 ## A condition that encapsulates validation of input state.

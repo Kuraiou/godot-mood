@@ -1,3 +1,4 @@
+@tool
 class_name MoodConditionTimeout extends MoodCondition
 
 #region Constants
