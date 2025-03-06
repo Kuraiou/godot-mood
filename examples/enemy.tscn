@@ -1,60 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://ddv64oa3iwhur"]
-
-[ext_resource type="Script" uid="uid://dojhtlp310d5d" path="res://addons/mood/nodes/mood_machine.gd" id="1_kruak"]
-[ext_resource type="Script" uid="uid://0re6tuqk5egu" path="res://addons/mood/nodes/mood.gd" id="2_m547o"]
-[ext_resource type="Script" uid="uid://dybwlfxa5kmou" path="res://addons/mood/nodes/scripts/mood_method_delegator.gd" id="5_fcnx0"]
-[ext_resource type="Script" uid="uid://b448uxn08i6o1" path="res://addons/mood/nodes/conditions/mood_condition_property.gd" id="5_s00uc"]
-[ext_resource type="Script" uid="uid://corvum2mgs3oh" path="res://addons/mood/nodes/mood_transition.gd" id="7_o8xgd"]
+[gd_scene load_steps=2 format=3 uid="uid://ddv64oa3iwhur"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_sk223"]
 
 [node name="Enemy" type="CharacterBody2D"]
 
-[node name="MoveMachine" type="Node" parent="." node_paths=PackedStringArray("initial_mood", "target")]
-script = ExtResource("1_kruak")
-initial_mood = NodePath("Happy")
-target = NodePath("..")
-
-[node name="Happy" type="Node" parent="MoveMachine"]
-script = ExtResource("2_m547o")
-
-[node name="MoodTransition" type="Node" parent="MoveMachine/Happy"]
-script = ExtResource("7_o8xgd")
-metadata/_custom_type_script = "uid://corvum2mgs3oh"
-
-[node name="MoodMethodDelegator" type="Node" parent="MoveMachine/Happy"]
-script = ExtResource("5_fcnx0")
-
-[node name="Sad" type="Node" parent="MoveMachine"]
-script = ExtResource("2_m547o")
-metadata/_custom_type_script = "uid://0re6tuqk5egu"
-
-[node name="SadToHappy" type="Node" parent="MoveMachine/Sad" node_paths=PackedStringArray("to_mood")]
-script = ExtResource("7_o8xgd")
-to_mood = NodePath("../../Happy")
-
-[node name="Property Condition 1" type="Node" parent="MoveMachine/Sad/SadToHappy" node_paths=PackedStringArray("property_target", "node_path_root")]
-script = ExtResource("5_s00uc")
-property_target = NodePath("../../../../ShootMachine")
-property = "initial_mood"
-criteria = NodePath("ShootMachine/Mood")
-is_node_path = true
-node_path_root = NodePath("../../../..")
-
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_sk223")
-
-[node name="--- Timers ---" type="Node" parent="."]
-
-[node name="HappySignalReceiveTimer" type="Timer" parent="--- Timers ---"]
-wait_time = 2.0
-
-[node name="ShootMachine" type="Node" parent="." node_paths=PackedStringArray("initial_mood", "target")]
-script = ExtResource("1_kruak")
-initial_mood = NodePath("Mood")
-target = NodePath("..")
-metadata/_custom_type_script = "uid://dojhtlp310d5d"
-
-[node name="Mood" type="Node" parent="ShootMachine"]
-script = ExtResource("2_m547o")
-metadata/_custom_type_script = "uid://0re6tuqk5egu"

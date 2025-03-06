@@ -1,3 +1,4 @@
+@tool
 extends Node
 
 static func __get_fn(t: Object, m: Variant) -> Callable:

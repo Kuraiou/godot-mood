@@ -1,7 +1,19 @@
+@tool
 extends Node
+
+## An Autoload which turns input events for action into signals and provides
+## some simple wrappers for identifying the current state of the defined
+## input actions.
 
 #region Constants
 
+## WAITING: this action has not been pressed or released.
+##   All actions start in this state.
+##   JUST_RELEASED actions go back to thi state after "mood/input/discard_release_delay_sec"
+## JUST_PRESSED: Set during initial press.
+## ECHOED: An echo event was received on or after the "mood/input/input_echo_delay_sec"
+##   setting.
+## JUST_RELEASED: A pressed or echoed action received a release event..
 enum InputActionState {
 	WAITING,
 	JUST_PRESSED,
@@ -11,30 +23,40 @@ enum InputActionState {
 
 #endregion
 
-#region Public Variables
-## put your @exports here.
-##
-## then put your var foo, var bar (variables you might touch from elsewhere) here.
+#region Signals
+
+## Signalled when an action is pressed for the first time.
+## Whether this uses exact_match or not is dependent on "mood/input/input_tracking_exact_match".
+signal action_pressed(action: String, action_event: InputEvent)
+## Signalled when a pressed action is echoed for the first time, on or after
+## "mood/input/input_echo_delay_sec".
+## Whether this uses exact_match or not is dependent on "mood/input/input_tracking_exact_match".
+signal action_echoed(action: String, action_event: InputEvent)
+## Signalled when a pressed or echoed action is released for the first time.
+## Whether this uses exact_match or not is dependent on "mood/input/input_tracking_exact_match".
+signal action_released(action: String, action_event: InputEvent)
+
 #endregion
 
 #region Private Variables
-## put variables you won't touch here, prefixed by an underscore (`var _foo`).
-#endregion
 
-#region Signals
-
-signal action_pressed(action: String, action_event: InputEvent)
-signal action_echoed(action: String, action_event: InputEvent)
-signal action_released(action: String, action_event: InputEvent)
+## the hash of action information to extract.
+var _action_tracking := {}
 
 #endregion
 
 #region Overrides
 
-var _action_tracking := {}
-
+## When an unhandled input is received, we will iterate through all available
+## actions in the InputMap and update their state based on the event, as Godot
+## does not provide a facility to return the specific action(s) that constitute
+## the event.
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_type():
+		return
+
+	# don't handle input events inside of the editor, that's silly!
+	if Engine.is_editor_hint():
 		return
 
 	var now := Time.get_unix_time_from_system()
@@ -68,23 +90,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_action_tracking[action]["strength"] = 0.0
 
 			action_released.emit(action, event)
-		elif _action_tracking[action]["state"] == InputActionState.JUST_RELEASED:
+		elif _action_tracking[action]["state"] == InputActionState.JUST_RELEASED and delta_since_last_time >= float(ProjectSettings.get_setting("mood/input/discard_release_delay_sec", 0.0)):
 			_action_tracking[action]["state"] = InputActionState.WAITING
 			_action_tracking[action]["time_between_actions"] = delta_since_last_time
 			_action_tracking[action]["strength"] = 0.0
 			_action_tracking[action]["since"] = now
 
 #endregion
-
-#region Public Methods
-## put your methods here.
-#endregion
-
-#region Private Methods
-## put methods you use only internally here, prefixed with an underscore.
-#endregion
-
-#region Signal Hooks
-## put methods used as responses to signals here.
-## we don't put #endregion here because this is the last block and when we use the
-## UI to add signal hooks they always get concatenated at the end of the file.

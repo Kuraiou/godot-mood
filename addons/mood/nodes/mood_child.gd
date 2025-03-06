@@ -1,20 +1,18 @@
 @tool
-
-## Any function which conditionally operates or responds to changes in mood
-## should go under the Mood representing that mood; the [MoodChild] class
-## acts as a simple wrapper around that behavior.
-## Note that Moods can have a parent that is a Mood itself to perform
-## combination behaviors.
 class_name MoodChild extends MoodMachineChild
+
+## An abstract base class for any child which is intended to operate within the
+## context of a parent [Mood], or which is intended to operate only when a
+## parent [Mood] is the [member MoodMachine.current_mood].
 
 #region Public Variables
 
-var _mood: Mood = null
-
-## The [class Mood] that acts as the fundamental parent mood.
-## Because a [class Mood] is itself a [class MoodChild], it can have a parent
-## mood that is different from itself; this allows for complex multi-mood
-## assignment, or at least, ideally it will.
+## The [Mood] parent node. It is assigned as a variable to avoid having to
+## re-fetch the parent Mood whenever it is relevant.[br]
+## When being set, if the class inheriting this one has [code]_enter_mood[/code]
+## or [code]_exit_mood[/code] methods defined, they will be automatically
+## connected to the [signal Mood.mood_entered] or [signal Mood.mood_exited]
+## signals respectively.
 var mood: Mood:
 	get():
 		if _mood == null:
@@ -56,8 +54,7 @@ var mood: Mood:
 
 #endregion
 
-#region Overrides
+#region Private Variables
 
-#endregion
-
-#region Signal Hooks
+## A cache of the [Mood] parent.
+var _mood: Mood = null

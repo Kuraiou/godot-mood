@@ -1,18 +1,46 @@
 @tool
 @icon("res://addons/mood/icons/eye-open.svg")
-## A type of condition that evaluates whether a property or
-## method result on an object meets a specific criteria.
 class_name MoodConditionProperty extends MoodCondition
 
-enum Operator { EQ = 0, LT = 1, LTE = 2, GT = 3, GTE = 4, NOT = 5 }
+## A type of condition that evaluates whether a property or method value on a
+## given target evaluates a given criteria. This node is the bread-and-butter of
+## condition selection.[br]
+##[br]
+## This can basically be considered an evaluation that looks like:[br]
+##[br]
+##[codeblock]
+## [property_target].[property] [operator] [criteria]
+##[/codeblock]
 
-## The object who owns the property.
-var _property_target: Node
+#region Constants
+
+## The mechanism to compare the evaluated [member property] to the [member criteria].
+enum Operator {
+	## ==
+	EQ = 0,
+	## <
+	LT = 1,
+	## <=
+	LTE = 2,
+	## >
+	GT = 3,
+	## >=
+	GTE = 4,
+	## !=
+	NOT = 5
+}
+
+#endregion
+
+#region Public Variables
+
+## The source of the property being evaluated. By default, this will be the same
+## as the [member MoodMachineChild.target]
 @export var property_target: Node:
 	get():
 		if _property_target == null:
-			if machine != null:
-				_property_target = machine.target
+			if is_instance_valid(target):
+				_property_target = target
 
 		return _property_target
 	set(value):
@@ -22,16 +50,32 @@ var _property_target: Node
 		_property_target = value
 		notify_property_list_changed()
 
-## The property we're evaluating.
+## The property or method on the [member property_target] whose value we will be
+## evaluating.
 @export var property := ""
-## The mechanism for comparison.
+## The mechanism for comapring the resolved [member property] to the [member criteria].
 @export var comparator: Operator = Operator.EQ
-## The value we're comparing against. Because it's variant,
-## we have to do some shenanigans in the inspector plugin.
+## The value that we are comparing to the [member property] via the [member comparator].
+## The criteria's type is limited.
 @export var criteria: Variant = null
+## If the type of the [member property] to compare against is a [Node], this flag
+## should be set to true so that we can store only the node path and resolve it at runtime.
 @export var is_node_path := false
+## If the type of the [member property] to compare against is a [Node], since we store
+## its value as a relative [NodePath] we need to know the root Node to path from.
 @export var node_path_root: Node
+## If this is true, the [member property] will be assumed to be a [Callable] which takes
+## no parameters instead of a member. 
 @export var is_callable := false
+
+#endregion
+
+#region Private Variables
+
+## A cache of [member property_target].
+var _property_target: Node
+
+#endregion
 
 #region Overrides
 
@@ -41,8 +85,8 @@ func _property_can_revert(property: StringName) -> bool:
 func _property_get_revert(property: StringName) -> Variant:
 	match property:
 		&"property_target":
-			if machine:
-				return machine.target
+			if is_instance_valid(target):
+				return target
 			return null
 		_:
 			return null
@@ -51,14 +95,19 @@ func _property_get_revert(property: StringName) -> Variant:
 
 #region Public Methods
 
-## Return whether or not an input is valid.
-##
-## @param input [Node, Variant] The value to compare against. If
-##   [evaluate_nodes] is true, then if the input is a Node and has
-##   the [property] then the input will be overridden with that
-##   property value.
-## @param evaluate_nodes [bool]
-## @return Whether or not the input is valid.
+## This condition is valid if the result of comparing the [member property_target]'s
+## [member property] to the [member criteria] via the [member comparator] results in
+## true.[br]
+##[br]
+## Example:[br]
+## given the following configuration:[br]
+## * [member property_target] is a [CharacterBody2D][br]
+## * [member property] is [code]"is_on_floor"[/code][br]
+## * [member is_callable] is [code]true[/code][br]
+## * [member comparator] is [enum Operator.EQ][br]
+## * [member criteria] is [code]true[/code][br]
+##[br]
+## then this node will be valid whenever the result of [method CharacterBody2D.is_on_floor] returns [code]true[/code].
 func is_valid(cache: Dictionary = {}) -> bool:
 	if property not in cache:
 		if is_callable:

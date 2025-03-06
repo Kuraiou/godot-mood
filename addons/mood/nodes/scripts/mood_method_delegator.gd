@@ -1,10 +1,11 @@
 @tool
 @icon("res://addons/mood/icons/circle-arrow.svg")
-
-## A basic and straightforward mood component which allows you to just plainly
-## delegate the behaviors back to the target. This is for when you prefer scripts
-## with lots of code in them instead of well-isolated, reusable components.
 class_name MoodMethodDelegator extends MoodScript
+
+## A generic Mood Component which allows delegation of behavior to methods in the
+## [member MoodMachineChild.target]'s script. This allows you to break the
+## componentization pattern of [MoodScript] in favor of writing methods in classes.[br]
+## I don't know why you would want to do that, but you do you.
 
 #region Public Variables
 

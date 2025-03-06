@@ -1,7 +1,12 @@
+@tool
 extends Node
+
+## An autoload which allows for interrogating locally defined (i.e. script
+## with `class_name`) classes for metadata, similar to ClassDB.
 
 #region Constants
 
+## A specialized tree node for representing the inheritance tree of local classes.
 class LocalTreeItem:
 	var parent: LocalTreeItem
 	var children: Array[LocalTreeItem]
@@ -59,38 +64,28 @@ class LocalTreeItem:
 		return null
 
 #endregion
-
-#region Public Variables
-## put your @exports here.
-##
-## then put your var foo, var bar (variables you might touch from elsewhere) here.
-#endregion
-
 #region Private Variables
 
+## The tree of local classes, starting at [Object]. Classes which are built-in
+## but are ancestors of a local class are represented as nodes unerneath [Object],
+## regardless of their real representation.
 static var _class_tree: LocalTreeItem
+## A quick dictionary cache of local classes mapped to their icon paths if defined.
 static var _icon_map: Dictionary[String, String]
-## put variables you won't touch here, prefixed by an underscore (`var _foo`).
-#endregion
 
-#region Signals
-## put your signal definitions here.
-#endregion
-
-#region Overrides
-## virtual override methods here, e.g.
-## _init, _ready
-## _process, _physics_process
-## _enter_tree, _exit_tree
 #endregion
 
 #region Public Methods
 
+## Given a class name, return the icon path if it exists in the
+## [member _icon_path_map].
 static func get_icon_path(klass: String) -> String:
 	refresh_tree()
 	
-	return _icon_map[klass]
+	return _icon_map.get(klass)
 
+## Load all local (amusingly enough called "global") classes into the [member _clas_tree]
+## and populate the [member _icon_path_map].
 static func refresh_tree():
 	var class_list := ProjectSettings.get_global_class_list()
 	if _class_tree == null:
@@ -144,14 +139,5 @@ static func refresh_tree():
 		if entry["icon"]:
 			_icon_map[entry["class"]] = entry["icon"]
 		parent_tree_node.add_child(entry)
-## put your methods here.
-#endregion
 
-#region Private Methods
-## put methods you use only internally here, prefixed with an underscore.
 #endregion
-
-#region Signal Hooks
-## put methods used as responses to signals here.
-## we don't put #endregion here because this is the last block and when we use the
-## UI to add signal hooks they always get concatenated at the end of the file.

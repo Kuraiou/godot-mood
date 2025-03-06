@@ -1,10 +1,79 @@
 @tool
 class_name MoodConditionInput extends MoodCondition
 
-## A condition that encapsulates validation of input state.
+## A condition that encapsulates validation of input state based on [InputMap] actions.[br]
+## The most typical use case is to map a particular action (e.g. [code]ui_up[/code]) to
+## a particular state (e.g. [code]MoveUp[/code]).[br][br]
+## A very simple pseudo-structure Example:
+## [codeblock]
+## * MoodMachine -- configured with evaluate_moods_directly: true
+##   * Mood: MoveUp
+##     * MoodConditionInput:
+##       -- actions: [ui_up]
+##     * MoodScript: SetMoveDirection
+##       -- direction: Up
+##     * MoodScript: UpdatePosition
+##   * repeat for Down, Left, and Right
+## [/codeblock][br]
+## [br]
+## A more complex use-case might be triggering a specific state as a side-effect
+## of another state while the button is held down and other conditions are met,
+## such as a sprinting modifier while moving, with a post-release delay.[br]
+## Example:[br]
+## [codeblock]
+## * MoodMachine: Movement -- configured with evaluate_moods_directly: false
+##   * Mood: Standing
+##     * MoodTransition: Sprinting
+##       -- and_all_conditions: true
+##       * MoodConditionIput:
+##         -- actions: [ui_up, ui_down, ui_left, ui_right]
+##       * MoodConditionIput:
+##         -- actions: [sprinting]
+##        * MoodConditionProperty:
+##          -- property: target.energy
+##          -- operator: GT
+##          -- criteria: 0
+##     * MoodTransition: Moving
+##       -- actions: [ui_up, ui_down, ui_left, ui_right]
+##   * Mood: Moving
+##     * MoodTransition: Sprinting
+##       -- and_all_conditions: true
+##       * MoodConditionInput:
+##         -- actions: [sprint]
+##         -- rule_become_invalid_when: TIMEOUT_OR_RELEASE
+##         -- rule_timeout_sec: 0.25 # adds a buffer after press+release to still move to sprint
+##         -- rule_timeout_refresh_on_echo: true
+##       * MoodCondition
+##     * MoodScript: UpdatePosition
+##   * Mood: Sprinting
+##     * MoodTransition: Standing
+##       * MoodConditionInput:
+##         -- actions: [ui_up, ui_down, ui_left, ui_right]
+##         -- invert_validity: true # move back to standing if we're not doing anything
+##     * MoodTransition: Moving
+##       -- and_all_conditions: false # any of these removes us from sprinting
+##       * MoodConditionInput:
+##         -- actions: [sprinting]
+##         -- invert_validity: True
+##       * MoodConditionProperty:
+##         -- property: target.energy
+##         -- operator: LTEQ
+##         -- criteria: 0
+##       * MoodConditionTimeout:
+##         * time_sec: 0.5 #
+##    * MoodScript: DrainStamina
+##    * MoodScript: FlagSprinting
+##    * MoodScript: UpdatePosition
+## [/codeblock]
 
 #region Constants
 
+## The possible mechanisms by which this condition can become invalid.[br]
+## * RELEASE -- when the actions are released or the mood is changed.[br]
+## * MOOD_CHANGE -- when the mood is changed.[br]
+## * TIMEOUT -- after a preset time or when the mood is changed.[br]
+## * TIMEOUT_OR_RELEASE -- after a preset time, or when the actions are released,
+##   or when the mood is changed.
 enum InvalidTrigger {
 	RELEASE,
 	MOOD_CHANGE,
@@ -25,7 +94,7 @@ enum InvalidTrigger {
 @export var invert_validity := false
 
 @export_group("Condition Rules", "rule")
-## If true, this condition is valid only when ALL actions are selected, instead
+## If true, this condition is valid only when ALL actions are pressed/echoed, instead
 ## of ANY actions in the list.
 @export var rule_all_actions: bool = true
 ## This condition becomes valid whenever the initial press occurs. It may become
@@ -66,6 +135,7 @@ var _timer: SceneTreeTimer
 
 #region Overrides
 
+## Connect to the [InputTracker] action signals when ready.
 func _ready() -> void:
 	if invert_validity:
 		_valid = true
@@ -90,6 +160,8 @@ func is_valid(cache: Dictionary = {}) -> bool:
 
 #region Private Methods
 
+## When we exit the mood this condition belongs to, we always set ourselves to
+## invalid.
 func _exit_mood(_next_mood: Mood) -> void:
 	_valid = false
 
@@ -97,6 +169,9 @@ func _exit_mood(_next_mood: Mood) -> void:
 
 #region Signal Hooks
 
+## When [signal InputTracker.action_pressed] is fired, we flag this condition as
+## valid or invalid and set up any conditions needed to handle our invalidation
+## trigger.
 func _on_action_pressed(action: String, event: InputEvent) -> void:
 	if action not in actions:
 		return

@@ -3,6 +3,7 @@ extends VBoxContainer
 
 #region Constants
 
+## A list of GDScript types which can be selected in the UI.
 const VALID_TYPES := [
 	TYPE_STRING, TYPE_STRING_NAME, TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_OBJECT, TYPE_NODE_PATH
 ]
@@ -108,8 +109,6 @@ func _update_property_editor() -> void:
 		%SelectedProperty.text = "Select A Property..."
 		%SelectedProperty.add_theme_color_override("font_color", COLOR_DESELECTED)
 	else:
-		print("property is: ", condition.property)
-
 		if condition.is_callable:
 			%PropertySelectorButton.text = "Change To Property"
 			%MethodSelectorButton.text = "Change Method"

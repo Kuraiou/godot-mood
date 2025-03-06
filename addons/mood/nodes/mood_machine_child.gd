@@ -10,7 +10,10 @@ class_name MoodMachineChild extends Node
 
 var _machine: MoodMachine = null
 
-## The parent machine.
+## The parent machine. This is lazily evaluated and cached in [member _machine].
+## When it is assigned, it automatically integrates with the machine's
+## [signal MoodMachine.machine_target_changed] signal to ensure consistency in
+## [member MoodMachine.target] assignment relative to its children.
 var machine: MoodMachine:
 	get():
 		if _machine == null:
@@ -33,8 +36,6 @@ var machine: MoodMachine:
 		else:
 			_target = null
 
-var _target: Node = null
-
 ## The referent for this script's operation, inherited from the parent Machine.
 ## see: [method MoodMachine.target]
 var target: Node:
@@ -50,23 +51,10 @@ var target: Node:
 
 #endregion
 
-#region Overrides
+#region Private Variables
 
-func _get_configuration_warnings() -> PackedStringArray:
-	var transition_targets := {} as Dictionary[String, bool]
-	var errors := [] as PackedStringArray
-
-	for transition: Node in find_children("*", "MoodTransition", false):
-		if not is_instance_valid(transition.to_mood):
-			continue
-
-		var transition_to := transition.to_mood.name as String
-		if transition_targets.get(transition_to, false):
-			errors.append("%s has multiple Transitions to it, behavior may be unexpected." % transition_to)
-		else:
-			transition_targets[transition_to] = true
-	
-	return errors
+# A cache of the target.
+var _target: Node = null
 
 #endregion
 

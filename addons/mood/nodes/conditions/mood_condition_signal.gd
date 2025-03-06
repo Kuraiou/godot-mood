@@ -1,9 +1,9 @@
 @tool
-## A condition which becomes valid when a signal from the
-## [signal_target] (defaulting to the machine target) is
-## received.[br]
-##
 class_name MoodConditionSignal extends MoodCondition
+
+## A condition which becomes valid when a signal from the
+## [member signal_target] (defaulting to the machine target) is
+## received.
 
 #region Public Variables
 
@@ -11,8 +11,8 @@ var _signal_target: Node
 @export var signal_target: Node:
 	get():
 		if _signal_target == null:
-			if machine != null:
-				signal_target = machine.target
+			if is_instance_valid(target):
+				signal_target = target
 		return _signal_target
 	set(value):
 		if _signal_target == value:

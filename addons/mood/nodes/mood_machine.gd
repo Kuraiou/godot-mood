@@ -1,48 +1,82 @@
 @tool
 @icon("res://addons/mood/icons/circles.svg")
+class_name MoodMachine extends Node
 
 ## The Finite State Machine for the Mood Plugin.[br]
 ##
-## The MoodMachine should only have [class Mood] nodes as its children. Depending
+## The MoodMachine should only have [Mood] nodes as its children. Depending
 ## on how you configure it, the MoodMachine will continually evaluate the
-## [class Mood] children's [class MoodCondition] children to determine which is the
+## [Mood] children's [MoodCondition] children to determine which is the
 ## current valid mood, then enable processing, physics processing, input, and
 ## unhandled input for all children.[br]
-##
+## [br]
 ## In this way, the "current mood" will be processed as normal by the engine,
 ## while all other children are, essentially, paused.
-class_name MoodMachine extends Node
 
 #region Constants
 
 ## used for evaluating the process mode for mood selection.
-enum ProcessMoodOn { IDLE, PHYSICS, MANUAL }
-## used to determine how to pick which mood to be in.
-enum MoodSelectionStrategy {
-	# return the first mood from children that is valid.
-	FIRST_VALID_MOOD,
-	# return the first mood from children that is valid and
-	# neither the current nor the previous mood.
-	FIRST_VALID_NON_PREVIOUS_MOOD,
-	# return the last mood from children that is valid.
-	LAST_VALID_MOOD,
-	# return the last mood that is from children that are valid
-	# and not the previous mood
-	LAST_VALID_NON_PREVIOUS_MOOD,
+enum ProcessMoodOn {
+	## Process mood selection in [method _process].
+	IDLE,
+	## Process mood selection in [method _physics_process].
+	PHYSICS,
+	## Do not automatically processe mood selection. Use this when you expect to
+	## explicitly assign [member current_mood] in your own subsystem.
+	MANUAL
 }
 
-## when no moods are valid, the fallback strategy describes
-## how to change moods anyways.
+## When [member evaluate_moods_directly] is [code]false[/code], This enum is
+## used to determine how the [member current_mood] should transition, if any
+## [MoodTransition] children of the [member current_mood] are valid.
+enum TransitionSelectionStrategy {
+	## Select the first valid [MoodTransition]'s [member MoodTransition.to_mood].
+	FIRST_VALID,
+	## Select the first valid [MoodTransition]'s [member MoodTransition.to_mood]
+	## that [b]is also[/b] not the [member previous_mood].
+	FIRST_VALID_NON_PREVIOUS,
+	## Select the [i]last[/i] valid [MoodTransition]'s [member MoodTransition.to_mood].
+	LAST_VALID,
+	## Select the [i]last[/i] valid [MoodTransition]'s [member MoodTransition.to_mood]
+	## that [b]is also[/b] not the [member previous_mood].
+	LAST_VALID_NON_PREVIOUS,
+}
+
+## When [member evaluate_moods_directly] is [code]true[/code], This enum is
+## used to determine how the [member current_mood] should transition, if any
+## immediate [Mood] children's [member Mood.root_condition] are valid.
+enum MoodSelectionStrategy {
+	## Select the first [Mood] with a valid [member Mood.root_condition].
+	FIRST_VALID,
+	## Select the first [Mood] with a valid [member Mood.root_condition]
+	## that [b]is also[/b] not the [member current_mood].
+	FIRST_VALID_NEW,
+	## Select the first [Mood] with a valid [member Mood.root_condition]
+	## that [b]is also[/b] not the [member previous_mood].
+	FIRST_VALID_NON_PREVIOUS,
+	## Select the [i]last[/i] [Mood] with a valid [member Mood.root_condition].
+	LAST_VALID,
+	## Select the [i]last[/i] [Mood] with a valid [member Mood.root_condition]
+	## that [b]is also[/b] not the [member current_mood].
+	LAST_VALID_NEW,
+	## Select the [i]last[/i] [Mood] with a valid [member Mood.root_condition]
+	## that [b]is also[/b] not the [member previous_mood].
+	LAST_VALID_NON_PREVIOUS,
+}
+
+## When [member evaluate_moods_directly] is [code]true[/code], this enum is used
+## to determine how to handle when there are no valid [member Mood.root_condition]s
+## amongst immediate [Mood] children.
 enum MoodFallbackStrategy {
-	# don't change the mood.
+	## don't change the mood.
 	KEEP_CURRENT_MOOD,
-	# re-evaluate previous->current transition. If it's no longer valid, change
-	# the mood back to the initial mood
+	## re-evaluate previous->current transition. If it's no longer valid, change
+	## the mood back to the initial mood
 	RE_EVALUATE_AND_FALLBACK_TO_INITIAL,
-	# re-evaluate previous->current transition. If it's no longer valid, change
-	# the mood back to the initial mood.
+	## re-evaluate previous->current transition. If it's no longer valid, change
+	## the mood back to the initial mood.
 	RE_EVALUATE_AND_FALLBACK_TO_PREVIOUS,
-	# call the fallback script.
+	## call the [member mood_fallback_script]'s [code]_find_next_mood[/code] method.
 	DEFER_TO_CALLABLE
 }
 
@@ -50,9 +84,9 @@ enum MoodFallbackStrategy {
 
 #region Public Variables
 
-## The mood to select when the machine is started, before any
-## mood condition are evaluated.
-## If not set, the first mood child of the machine is used.
+## The mood to select when the machine is started, before any conditions are
+## evaluated. When the first [Mood] child enters the tree under this Node,
+## it is automatically assigned as the initial mood.
 @export var initial_mood: Mood = null:
 	set(value):
 		if initial_mood == value:
@@ -78,7 +112,8 @@ enum MoodFallbackStrategy {
 
 @export_category("Mood Selection Logic")
 
-## See [enum ProcessMoodOn]. When to evaluate which mood is the correct one.
+## Whether to evaluate changes to [member current_mood] automatically during
+## [method _process] or [method _physics_process], or not at all.
 @export var process_mood_on: ProcessMoodOn = ProcessMoodOn.IDLE:
 	set(value):
 		if process_mood_on == value:
@@ -89,19 +124,33 @@ enum MoodFallbackStrategy {
 		set_process(value == ProcessMoodOn.IDLE)
 		set_physics_process(value == ProcessMoodOn.PHYSICS)
 
-## See [enum MoodSelectionStrategy]. What strategy to use to handle various
-## situations where multiple [class Mood]s might be appropriate.
-@export var mood_selection_strategy: MoodSelectionStrategy = MoodSelectionStrategy.FIRST_VALID_MOOD
+## The Mood FSM system supports two mechanisms for automated [Mood] selection:[br]
+## [br]
+## 1. [b]Direct Evaluation[/b]: When this parameter is [code]true[/code], the
+## MoodMachine runs the [member Mood.root_condition] for all immediate [Mood]
+## children, use [member mood_selection_strategy] to determine the correct
+## [Mood] amongst valid [Mood]s to transition to, and use [member mood_fallback_strategy]
+## to handle when there are no valid [Mood]s.[br]
+## 2. [b]Transition Evaluation[/b]: When this parameter is [code]false[/code],
+## the MoodMachine will evaluate all immediate [MoodTransition] children of the
+## [member current_mood], use [member transition_select_strategy] to determine
+## the correct [Mood] amongst valid [Mood]s to transition to. There is no fallback
+## handling.
+@export var evaluate_moods_directly := false
+
+## When [member evaluate_moods_directly] is false, this specifies the mechanism for
+## transitioning between the [member current_mood] and a valid next [Mood].
+@export var transition_selection_strategy: TransitionSelectionStrategy = TransitionSelectionStrategy.FIRST_VALID
+
 ## See [enum MoodFallbackStrategy]. What strategy to use if no moods are considered valid.
 @export var mood_fallback_strategy: MoodFallbackStrategy = MoodFallbackStrategy.KEEP_CURRENT_MOOD
+
 ## If the [member mood_fallback_strategy] is MoodFallbackStrategy.DEFER_TO_CALLABLE, this
 ## is required, and is the script that will be used.[br]
 ## The script must have this method signature:[br][br]
 ## 
 ## [code]_find_next_mood(machine: MoodMachine) -> Mood:[/code]
 @export var mood_fallback_script: Script
-
-var _current_mood: Mood = null
 
 ## The current mood node reference.
 var current_mood: Mood:
@@ -110,6 +159,18 @@ var current_mood: Mood:
 			_current_mood = initial_mood
 
 		return _current_mood
+
+	## When we assign a new [Mood], either through automation or via direct assignment,
+	##  the timeline of events is:[br]
+	## 1. emit [signal mood_changing].[br]
+	## 2. check to see if [member _block_change] has been set via [method keep_mood].
+	## If it has, we reset [member _block_change] and do not update the current mood.[br]
+	## 3. emit [Mood.mood_exited] on the [member previous_mood].[br]
+	## 4. call [method Mood.disable] on the [member previous_mood].[br]
+	## 5. assign the current mood to the new value.[br]
+	## 6. emit [signal mood_changed].[br]
+	## 7. emit [signal Mood.mood_entered] on the new current mood.[br]
+	## 8. call [method Mood.enable] on the new current mood.
 	set(value):
 		# we must always have a mood.
 		if value == null:
@@ -117,7 +178,7 @@ var current_mood: Mood:
 
 		if _current_mood == value:
 			return
-			
+
 		mood_changing.emit(_current_mood, value)
 
 		if _block_change:
@@ -143,24 +204,26 @@ var previous_mood: Mood = null
 
 #region Private Variables
 
+## A cache of [member current_mood].
+var _current_mood: Mood = null
+## A flag, set via [method keep_mood], which can be used to interrupt an attempted change.[br]
+## This feature will typically be triggered by handling [signal mood_changing].
 var _block_change: bool = false
+## A cache of [member target].
 var _target: Node
 
 #endregion
 
 #region Signals
 
-## signaled when the target of the machine is changed. Primarily for tool
-## scripts and to ensure the consistency of [member target] for all [class MoodChild]
-## children.
+## signaled when the [member target] is changed, to ensure that changes to that
+## value automatically propagate down to all [MoodMachineChild] children.
 signal machine_target_changed(target: Node)
 
-## signaled when the mood changes, before the values are
-## assigned.
+## signaled when the mood changes, before the values are assigned.
 signal mood_changing(current_mood: Mood, next_mood: Mood)
 
-## signaled when the mood has changed, after the new
-## value has been assigned.
+## signaled when the mood has changed, after the new value has been assigned.
 signal mood_changed(previous_mood: Mood, current_mood: Mood)
 
 #endregion
@@ -168,16 +231,23 @@ signal mood_changed(previous_mood: Mood, current_mood: Mood)
 #region Overrides
 
 ## When the machine is ready, it will call [code]_mood_machine_ready[/code]
-## on all children which define that method.
+## on all children which define that method. Note that this occurs regardless of
+## the [member current_mood].
 func _ready() -> void:
 	if target == null:
 		target = get_parent()
 
 	Recursion.recurse(self, "_mood_machine_ready")
 
+## [member initial_mood] and [member target] are revertable as they have well-defined
+## defaults: the first immediate [Mood] child for the former, and the parent of
+## the MoodMachine for the latter.
 func _property_can_revert(property: StringName) -> bool:
 	return property == &"initial_mood" || property == &"target"
 
+## [member initial_mood] and [member target] are revertable as they have well-defined
+## defaults: the first immediate [Mood] child for the former, and the parent of
+## the [MoodMachine] for the latter.
 func _property_get_revert(property: StringName) -> Variant:
 	match property:
 		&"initial_mood":
@@ -191,12 +261,19 @@ func _property_get_revert(property: StringName) -> Variant:
 		_:
 			return null
 
+## The following basic rules are eligible for warnings on a MoodMachine:[br]
+## [br]
+## 1. There must be at least one [Mood], which gets assigned to [member initial_mood].[br]
 func _get_configuration_warnings() -> PackedStringArray:
-	if initial_mood == null:
-		return ["Please add a Mood to this Machine!"]
-	return []
+	var transition_targets := {} as Dictionary[String, bool]
+	var errors := [] as PackedStringArray
 
-## determine the next mood based on the process rules of the child
+	if initial_mood == null:
+		errors.append("You must have at least one Mood child to assign as initial mood.")
+
+	return errors
+
+## If [member process_mood_on] is [enum ProcessMoodOn.IDLE]
 func _process(_delta) -> void:
 	if process_mood_on != ProcessMoodOn.IDLE:
 		return
@@ -254,13 +331,13 @@ func _calc_next_mood() -> void:
 func _find_next_mood() -> Mood:
 	var transitions := current_mood.find_children("*", "MoodTransition", false) as Array[MoodTransition]
 
-	match mood_selection_strategy:
-		MoodSelectionStrategy.FIRST_VALID_MOOD:
+	match transition_selection_strategy:
+		TransitionSelectionStrategy.FIRST_VALID:
 			for transition: MoodTransition in transitions:
 				if transition.is_valid():
 					return transition.to_mood
 
-		MoodSelectionStrategy.FIRST_VALID_NON_PREVIOUS_MOOD:
+		TransitionSelectionStrategy.FIRST_VALID_NON_PREVIOUS:
 			for transition: MoodTransition in transitions:
 				if transition.to_mood == previous_mood:
 					continue
@@ -268,13 +345,13 @@ func _find_next_mood() -> Mood:
 				if transition.is_valid():
 					return transition.to_mood
 
-		MoodSelectionStrategy.LAST_VALID_MOOD:
+		TransitionSelectionStrategy.LAST_VALID:
 			transitions.reverse()
 			for transition: MoodTransition in transitions:
 				if transition.is_valid():
 					return transition.to_mood
 
-		MoodSelectionStrategy.LAST_VALID_NON_PREVIOUS_MOOD:
+		TransitionSelectionStrategy.LAST_VALID_NON_PREVIOUS:
 			transitions.reverse()
 			for transition: MoodTransition in transitions:
 				if transition.to_mood == previous_mood:
