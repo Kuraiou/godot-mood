@@ -84,7 +84,6 @@ func _refresh_property_cache() -> void:
 			_methods_by_name[meth["name"]] = meth
 
 func _on_method_selected(method: String) -> void:
-	print("method is selected")
 	condition.property = method
 	condition.is_callable = method != ""
 	_update_property_editor()
