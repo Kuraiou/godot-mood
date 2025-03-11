@@ -14,7 +14,6 @@ func _parse_begin(object: Object) -> void:
 
 	var editor := MoodEditors.get_editor(object as Node)
 	if not editor:
-		print("no editor")
 		return
 
 	if "remove_button" in editor:

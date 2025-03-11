@@ -11,7 +11,8 @@ static var type_scene_list := {
 	"MoodTransition": MoodEditors.ConditionGroup,
 	"MoodConditionGroup": MoodEditors.ConditionGroup,
 	"MoodConditionProperty": MoodEditors.ConditionProperty,
-	"MoodConditionSignal": MoodEditors.ConditionSignal
+	"MoodConditionSignal": MoodEditors.ConditionSignal,
+	#"MoodConditionInput": MoodEditors.ConditionProperty
 }
 
 static var field_skips: Dictionary[String, Array] = {
@@ -19,7 +20,8 @@ static var field_skips: Dictionary[String, Array] = {
 	"MoodConditionGroup": ["and_all_conditions"],
 	"MoodTransition": ["and_all_conditions"],
 	"MoodConditionProperty": ["property", "comparator", "criteria", "is_callable", "is_node_path", "node_path_root"],
-	"MoodConditionSignal": ["signal_triggers"]
+	"MoodConditionSignal": ["signal_triggers"],
+	"MoodConditionInput": []
 }
 
 static func should_skip_property(node: Node, field: String) -> bool:
@@ -43,5 +45,8 @@ static func has_editor(node: Node) -> bool:
 # only call after checking with has_editor!
 static func get_editor(node: Node) -> CanvasItem:
 	var editor_name: StringName = node.get_script().get_global_name()
+
+	if editor_name not in type_scene_list:
+		return
 
 	return type_scene_list[editor_name].instantiate()
