@@ -4,7 +4,7 @@ extends Node
 static func __get_fn(t: Object, m: Variant) -> Callable:
 	if m is Callable:
 		return m
-	if m is StringName and t.has_method(m):
+	if m is String and t.has_method(m):
 		return Callable(t, m)
 
 	return func(): pass
