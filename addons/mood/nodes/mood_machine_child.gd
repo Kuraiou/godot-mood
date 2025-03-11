@@ -8,8 +8,6 @@ class_name MoodMachineChild extends Node
 
 #region Public Variables
 
-var _machine: MoodMachine = null
-
 ## The parent machine. This is lazily evaluated and cached in [member _machine].
 ## When it is assigned, it automatically integrates with the machine's
 ## [signal MoodMachine.machine_target_changed] signal to ensure consistency in
@@ -18,7 +16,6 @@ var machine: MoodMachine:
 	get():
 		if _machine == null:
 			machine = Recursion.find_parent_recursively(self, MoodMachine)
-
 		return _machine
 	set(val):
 		if _machine == val:
@@ -35,13 +32,15 @@ var machine: MoodMachine:
 			_target = _machine.target
 		else:
 			_target = null
+		notify_property_list_changed()
 
 ## The referent for this script's operation, inherited from the parent Machine.
 ## see: [method MoodMachine.target]
 var target: Node:
 	get():
-		if _target == null:
+		if _target == null and is_instance_valid(machine):
 			_target = machine.target
+			notify_property_list_changed()
 		return _target
 	set(val):
 		if _target == val:
@@ -52,6 +51,9 @@ var target: Node:
 #endregion
 
 #region Private Variables
+
+# A cache of the parent machine.
+var _machine: MoodMachine = null
 
 # A cache of the target.
 var _target: Node = null
