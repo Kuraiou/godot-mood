@@ -15,12 +15,24 @@ class_name MoodConditionGroup extends MoodCondition
 ## (bitwise "OR").
 @export var and_all_conditions: bool = true
 
+var conditions: Array[MoodCondition]:
+	get():
+		if Engine.is_editor_hint(): # don't cache in-engine
+			_conditions = []
+
+		if _conditions.is_empty():
+			for child: Node in get_children():
+				if child is MoodCondition:
+					_conditions.append(child as MoodCondition)
+
+		return _conditions
+
 #endregion
 
 #region Private Variables
 
 ## A cache of [MoodCondition] immediate children.
-var _conditions: Array[MoodCondition]
+var _conditions := [] as Array[MoodCondition]
 
 #endregion
 
@@ -29,7 +41,7 @@ var _conditions: Array[MoodCondition]
 func _get_configuration_warnings() -> PackedStringArray:
 	var errors := []
 
-	if get_conditions(false).size() == 0:
+	if conditions.is_empty():
 		errors.append("You must have at least one child MoodCondition.")
 
 	return errors
@@ -37,24 +49,6 @@ func _get_configuration_warnings() -> PackedStringArray:
 #endregion
 
 #region Public Methods
-
-## Get a cached list of all immediate owned children of this node which
-## are [MoodCondition]s or inherited [MoodCondition].
-func get_conditions(use_cache: bool = true) -> Array[MoodCondition]:
-	use_cache = use_cache and !Engine.is_editor_hint()
-
-	if use_cache and _conditions != null:
-		return _conditions
-
-	var conditions := [] as Array[MoodCondition]
-
-	for child in get_children():
-		if child is MoodCondition:
-			conditions.push_back(child)
-
-	_conditions = conditions
-
-	return conditions
 
 ## This condition is valid if:[br]
 ## [br]
@@ -64,8 +58,8 @@ func get_conditions(use_cache: bool = true) -> Array[MoodCondition]:
 ## children are true.
 func is_valid(cache: Dictionary = {}) -> bool:
 	if and_all_conditions:
-		return get_conditions().all(func (cond): cond.is_valid(cache))
+		return conditions.all(func (cond): return cond.is_valid(cache))
 	
-	return get_conditions().any(func (cond): cond.is_valid(cache))
+	return conditions.any(func (cond): return cond.is_valid(cache))
 
 #endregion
