@@ -142,6 +142,10 @@ enum MoodFallbackStrategy {
 ## transitioning between the [member current_mood] and a valid next [Mood].
 @export var transition_selection_strategy: TransitionSelectionStrategy = TransitionSelectionStrategy.FIRST_VALID
 
+## When [member evaluate_moods_directly] is true, this specifies the mechanism for
+## identifying the correct
+@export var mood_selection_strategy: MoodSelectionStrategy = MoodSelectionStrategy.FIRST_VALID
+
 ## See [enum MoodFallbackStrategy]. What strategy to use if no moods are considered valid.
 @export var mood_fallback_strategy: MoodFallbackStrategy = MoodFallbackStrategy.KEEP_CURRENT_MOOD
 
@@ -179,17 +183,19 @@ var current_mood: Mood:
 		if _current_mood == value:
 			return
 
+		print("%s: setting mood to " % name, value.name)
 		mood_changing.emit(_current_mood, value)
 
 		if _block_change:
 			_block_change = false
 			return
 
+		previous_mood = _current_mood
+
 		if previous_mood:
 			previous_mood.mood_exited.emit(current_mood)
 			previous_mood.disable()
 
-		previous_mood = _current_mood
 		_current_mood = value
 		
 		mood_changed.emit(previous_mood, _current_mood)
@@ -236,6 +242,13 @@ signal mood_changed(previous_mood: Mood, current_mood: Mood)
 func _ready() -> void:
 	if target == null:
 		target = get_parent()
+
+	for node: Node in get_children():
+		if node is Mood:
+			if (node as Mood) == current_mood:
+				(node as Mood).enable()
+			else:
+				(node as Mood).disable()
 
 	Recursion.recurse(self, "_mood_machine_ready")
 
@@ -323,13 +336,31 @@ func _calc_next_mood() -> void:
 	if Engine.is_editor_hint():
 		return
 
-	var next_mood: Mood = _find_next_mood()
-	if next_mood:
+	var next_mood: Mood
+	if evaluate_moods_directly:
+		next_mood = _find_next_valid_mood()
+	else:
+		next_mood = _find_mood_to_transition()
+
+	if next_mood and next_mood != current_mood:
 		change_mood(next_mood)
 
+func _find_next_valid_mood():
+	for node: Node in get_children():
+		if node is not Mood:
+			continue
+		
+		var mood := node as Mood
+		match mood_selection_strategy:
+			_:
+				pass
+
 ## get the
-func _find_next_mood() -> Mood:
-	var transitions := current_mood.find_children("*", "MoodTransition", false) as Array[MoodTransition]
+func _find_mood_to_transition() -> Mood:
+	# cast find_children result to proper typing
+	var transitions: Array[MoodTransition]	
+	for node: Node in current_mood.find_children("*", "MoodTransition", false):
+		transitions.append(node as MoodTransition)
 
 	match transition_selection_strategy:
 		TransitionSelectionStrategy.FIRST_VALID:
