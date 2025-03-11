@@ -50,6 +50,10 @@ func _get_configuration_warnings() -> PackedStringArray:
 
 #region Public Methods
 
+## public getter for conditions.
+func get_conditions() -> Array[MoodCondition]:
+	return conditions
+
 ## This condition is valid if:[br]
 ## [br]
 ## 1. [member and_all_conditions] is [code]true[/code] and [b]all[/b] of its immediate [MoodCondition]
