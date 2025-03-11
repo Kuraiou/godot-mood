@@ -27,6 +27,9 @@ enum ValidationMode {
 ## to invalidate on mood entry or exit (typically when [member MoodMachine.evaluate_nodes_directly]
 ## is [code]true[/code]) or only timeout (typically when false).
 @export var validation_mode := ValidationMode.VALID_ON_ENTRY
+## If this is set to [code]false[/code], then the condition is [i]always[/i] valid,
+## [i]except[/i] for when the timeout is triggered on entry/exit as per [member validation_mode].
+@export var trigger_sets_valid_to := true
 ## If using an UNBOUND validation mode, whether or not we want to reset the
 ## timer when re-triggering validity, or just leave it alone.
 @export var reset_on_reentry := true
@@ -51,6 +54,10 @@ var _valid := false
 #endregion
 
 #region Overrides
+
+## when we set up, _valid gets set up such that it can be triggered.
+func _ready() -> void:
+	_valid = !trigger_sets_valid_to
 
 ## Validity is reset when the parent mood is entered.
 func _enter_mood(_previous_mood: Mood) -> void:
@@ -83,19 +90,27 @@ func is_valid(cache: Dictionary = {}) -> bool:
 func _make_valid() -> void:
 	if is_instance_valid(_timer):
 		if reset_on_reentry:
-			if _timer.timeout.is_connected(_on_timer_timeout):
-				_timer.timeout.disconnect(_on_timer_timeout)
-			_timer = get_tree().create_timer(time_sec, process_always, process_in_physics, ignore_time_scale)
-	_valid = true
+			_create_timer()
+		else: # just to illustrate that if we have a timer but we're not re-entering, we just let it go.
+			pass
+	else:
+		_create_timer()
 
-## put methods you use only internally here, prefixed with an underscore.
+func _create_timer() -> void:
+	if is_instance_valid(_timer):
+		_timer.timeout.disconnect(_on_timer_timeout)
+		_timer = null
+	_timer = get_tree().create_timer(time_sec, process_always, process_in_physics, ignore_time_scale)
+	_timer.timeout.connect(_on_timer_timeout, CONNECT_ONE_SHOT)
+	_valid = trigger_sets_valid_to
+
 #endregion
 
 #region Signal Hooks
 
 ## When we time out the timer we our never considered valid at that point.
 func _on_timer_timeout() -> void:
-	if is_instance_valid(_timer):
+	if is_instance_valid(_timer) and _timer.timeout.is_connected(_on_timer_timeout):
 		_timer.timeout.disconnect(_on_timer_timeout)
-	_valid = false
 	_timer = null
+	_valid = !trigger_sets_valid_to
