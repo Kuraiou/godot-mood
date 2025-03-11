@@ -7,6 +7,4 @@ extends MoodScript
 # Fill this out for what code you want to run during physics processing when the
 # mood machine (AKA finite state machine) is in this current mood (AKA state).
 func _physics_process(delta: float) -> void:
-	print("%s: executing" % name)
-	#print("this shouldn't be happening!")
 	target.position += Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down").normalized() * target.get(speed_const) * delta
