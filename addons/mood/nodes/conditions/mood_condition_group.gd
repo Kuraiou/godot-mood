@@ -15,18 +15,6 @@ class_name MoodConditionGroup extends MoodCondition
 ## (bitwise "OR").
 @export var and_all_conditions: bool = true
 
-var conditions: Array[MoodCondition]:
-	get():
-		if Engine.is_editor_hint(): # don't cache in-engine
-			_conditions = []
-
-		if _conditions.is_empty():
-			for child: Node in get_children():
-				if child is MoodCondition:
-					_conditions.append(child as MoodCondition)
-
-		return _conditions
-
 #endregion
 
 #region Private Variables
@@ -41,7 +29,7 @@ var _conditions := [] as Array[MoodCondition]
 func _get_configuration_warnings() -> PackedStringArray:
 	var errors := []
 
-	if conditions.is_empty():
+	if get_conditions().is_empty():
 		errors.append("You must have at least one child MoodCondition.")
 
 	return errors
@@ -52,7 +40,16 @@ func _get_configuration_warnings() -> PackedStringArray:
 
 ## public getter for conditions.
 func get_conditions() -> Array[MoodCondition]:
-	return conditions
+	if Engine.is_editor_hint(): # don't cache in-engine
+		_conditions = []
+
+	if _conditions.is_empty():
+		for child: Node in get_children():
+			if child is MoodCondition:
+				_conditions.append(child as MoodCondition)
+
+	return _conditions
+
 
 ## This condition is valid if:[br]
 ## [br]
@@ -62,8 +59,8 @@ func get_conditions() -> Array[MoodCondition]:
 ## children are true.
 func is_valid(cache: Dictionary = {}) -> bool:
 	if and_all_conditions:
-		return conditions.all(func (cond): return cond.is_valid(cache))
+		return get_conditions().all(func (cond): return cond.is_valid(cache))
 	
-	return conditions.any(func (cond): return cond.is_valid(cache))
+	return get_conditions().any(func (cond): return cond.is_valid(cache))
 
 #endregion
