@@ -1,15 +1,16 @@
-[gd_scene load_steps=12 format=3 uid="uid://bflpa67sbry4n"]
+[gd_scene load_steps=13 format=3 uid="uid://bflpa67sbry4n"]
 
-[ext_resource type="Script" uid="uid://cexmmjes4fv" path="res://tests/scenes/player.gd" id="1_an8x8"]
+[ext_resource type="Script" uid="uid://cexmmjes4fv" path="res://examples/scenes/player.gd" id="1_an8x8"]
 [ext_resource type="Texture2D" uid="uid://b3vsw8i10o171" path="res://icon.svg" id="1_bom16"]
 [ext_resource type="Script" uid="uid://dojhtlp310d5d" path="res://addons/mood/nodes/mood_machine.gd" id="2_an8x8"]
 [ext_resource type="Script" uid="uid://0re6tuqk5egu" path="res://addons/mood/nodes/mood.gd" id="3_u1pv1"]
 [ext_resource type="Script" uid="uid://corvum2mgs3oh" path="res://addons/mood/nodes/mood_transition.gd" id="4_y8xmq"]
 [ext_resource type="Script" uid="uid://b66vkfnusc0f6" path="res://addons/mood/nodes/conditions/mood_condition_input.gd" id="5_fiv1m"]
+[ext_resource type="Script" uid="uid://lth7jksuyveq" path="res://addons/mood/nodes/conditions/mood_condition_timeout.gd" id="7_0ebda"]
 [ext_resource type="Script" uid="uid://b448uxn08i6o1" path="res://addons/mood/nodes/conditions/mood_condition_property.gd" id="7_u1pv1"]
-[ext_resource type="Script" uid="uid://6fcf7wp86vg3" path="res://tests/scenes/move_target.gd" id="8_fiv1m"]
-[ext_resource type="Script" uid="uid://qrxr1kr7m25j" path="res://tests/scenes/drain_stamina.gd" id="8_y8xmq"]
-[ext_resource type="Script" uid="uid://crhu6u6mstp77" path="res://tests/scenes/test_ui.gd" id="10_ogi84"]
+[ext_resource type="Script" uid="uid://6fcf7wp86vg3" path="res://examples/scenes/move_target.gd" id="8_fiv1m"]
+[ext_resource type="Script" uid="uid://qrxr1kr7m25j" path="res://examples/scenes/drain_stamina.gd" id="8_y8xmq"]
+[ext_resource type="Script" uid="uid://crhu6u6mstp77" path="res://examples/scenes/test_ui.gd" id="10_ogi84"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ogi84"]
 size = Vector2(127, 125)
@@ -17,6 +18,7 @@ size = Vector2(127, 125)
 [node name="InputStateTest" type="Node2D"]
 
 [node name="Player" type="Area2D" parent="." node_paths=PackedStringArray("sprint_machine")]
+position = Vector2(135, 103)
 script = ExtResource("1_an8x8")
 move_speed = 200
 sprint_speed = 600
@@ -51,6 +53,13 @@ rule_all_actions = false
 rule_only_invalid_when_all_released = true
 metadata/_custom_type_script = "uid://b66vkfnusc0f6"
 
+[node name="MoodConditionTimeout" type="Node" parent="Player/MoveMachine/Idle/TransitionToMoving"]
+script = ExtResource("7_0ebda")
+time_sec = 2.0
+validation_mode = 3
+trigger_sets_valid_to = false
+metadata/_custom_type_script = "uid://lth7jksuyveq"
+
 [node name="RecoverStamina" type="Node" parent="Player/MoveMachine/Idle"]
 script = ExtResource("8_y8xmq")
 stamina_per_sec = 15.0
@@ -81,7 +90,7 @@ metadata/_custom_type_script = "uid://corvum2mgs3oh"
 
 [node name="IsSprinting" type="Node" parent="Player/MoveMachine/Moving/TransitionToSprinting" node_paths=PackedStringArray("property_target")]
 script = ExtResource("7_u1pv1")
-property_target = NodePath("../../../../SprintMachine")
+property_target = NodePath("../../../..")
 property = "mood"
 criteria = "Sprinting"
 is_callable = true
@@ -103,7 +112,7 @@ metadata/_custom_type_script = "uid://corvum2mgs3oh"
 
 [node name="NotSprinting" type="Node" parent="Player/MoveMachine/Sprinting/TransitionToMoving" node_paths=PackedStringArray("property_target")]
 script = ExtResource("7_u1pv1")
-property_target = NodePath("../../../../SprintMachine")
+property_target = NodePath("../../../..")
 property = "mood"
 comparator = 5
 criteria = "Sprinting"
