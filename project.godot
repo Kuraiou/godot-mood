@@ -27,13 +27,12 @@ InputTracker="*res://addons/mood/autoloads/input_tracker.gd"
 
 [debug]
 
-settings/stdout/print_fps=true
-settings/stdout/verbose_stdout=true
+file_logging/enable_file_logging.pc=false
 gdscript/warnings/unused_private_class_variable=2
 gdscript/warnings/shadowed_variable_base_class=2
 gdscript/warnings/untyped_declaration=2
 canvas_items/debug_redraw_time=0.1
-canvas_items/debug_redraw_color=Color(1, 0.2, 0.2, 0)
+canvas_items/debug_redraw_color=Color(0.871339, 0.368141, 0.459314, 0.647059)
 
 [display]
 
