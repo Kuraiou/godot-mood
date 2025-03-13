@@ -1,8 +1,10 @@
 # Godot 4+ specific ignores
 .godot/
 
-# Addons that are for running
+# Addons that are not part of Mood itself
 addons/gut/
 
+# general local work
+.obsidian
 .DS_Store
 .editorconfig
