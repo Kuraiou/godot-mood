@@ -4,7 +4,7 @@ class_name MoodConditionGroupInspectorPlugin extends EditorInspectorPlugin
 var _condition_container: CanvasItem
 
 func _can_handle(object: Object) -> bool:
-	return MoodEditors.has_editor(object as Node)
+	return Mood.Editors.has_editor(object)
 
 func _parse_begin(object: Object) -> void:
 	if is_instance_valid(_condition_container):
@@ -12,24 +12,20 @@ func _parse_begin(object: Object) -> void:
 		await _condition_container.tree_exited
 		_condition_container = null
 
-	var editor := MoodEditors.get_editor(object as Node)
+	var editor: CanvasItem = Mood.Editors.get_editor(object)
+
 	if not editor:
 		return
 
+	# if it's a top-level property we should not remove it.
 	if "remove_button" in editor:
 		editor.remove_button.hide()
-
-	if "mood" in editor and object is Mood:
-		editor.mood = object
-	
-	if "condition" in editor and object is MoodCondition:
-		editor.condition = object
-
-	if "transition" in editor and object is MoodTransition:
-		editor.transition = object
 
 	_condition_container = editor
 	add_custom_control(_condition_container)
 
 func _parse_property(object: Object, type: Variant.Type, name: String, hint_type: PropertyHint, hint_string: String, usage_flags: int, wide: bool) -> bool:
-	return MoodEditors.should_skip_property(object, name)
+	if object.has_method("should_skip_property"):
+		return object.should_skip_property(name)
+		
+	return false

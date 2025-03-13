@@ -14,6 +14,72 @@ class_name Mood extends MoodMachineChild
 ##[br]
 ## All children of a [Mood] should inherit [MoodChild] to guarantee referential integrity.
 
+#region Constants
+
+const TransitionEditor = preload("res://addons/mood/scenes/editors/mood_ui_transitions_container.tscn")
+
+# because the plugin "Mood" is also the node "Mood", we can put a bunch of constants here
+# to use as namespacing. it clutters up the responsibility of the node a bit; just go with it.
+
+#const Recursion := preload("res://addons/mood/autoloads/recursion.gd")
+
+## A namespace for references to UI Editors for when the plugin is enabled.
+class Editors: # for namespacing purposes
+	static var registered_editors := {} as Dictionary[String, PackedScene]
+
+	static func has_editor(object: Object) -> bool:
+		if object.has_method("get_editor"):
+			return true
+		
+		var script: Script = object.get_script()
+		if not script:
+			return false
+
+		var klass: String = script.get_global_name() as String
+
+		return klass in registered_editors
+
+	static func get_editor(object: Node) -> CanvasItem:
+		if object.has_method("get_editor"):
+			return object.call("get_editor")
+
+		var script: Script = object.get_script()
+		if not script:
+			return null
+
+		var klass: String = script.get_global_name() as String
+
+		if klass in registered_editors:
+			var editor: CanvasItem = registered_editors[klass].instantiate()
+
+			if "condition" in editor:
+				if object is MoodCondition:
+					editor.condition = object
+				elif "condition" in object:
+					editor.condition = object.condition
+
+			if "mood" in editor:
+				if object is Mood:
+					editor.mood = object
+				elif "mood" in object:
+					editor.mood = object.mood
+
+			if "machine" in editor:
+				if object is MoodMachine:
+					editor.machine = object
+				elif "machine" in object:
+					editor.machine = object.machine
+
+			return editor
+
+		return null
+		
+
+	static func register_type(type_name: String, scene: PackedScene) -> void:
+		registered_editors[type_name] = scene
+
+#endregion
+
 #region Signals
 
 ## Emitted [b]after[/b] this mood becomes the [member MoodMachine.current_mood].
@@ -94,6 +160,28 @@ func _get_configuration_warnings() -> PackedStringArray:
 #endregion
 
 #region Public Methods
+
+## Used by the Plugin to show the editor; there are two kinds dependent on the machine.
+func get_editor() -> CanvasItem:
+	var editor: CanvasItem
+
+	if is_instance_valid(machine) and machine.evaluate_moods_directly:
+		if is_instance_valid(root_condition):
+			editor = Mood.Editors.get_editor(root_condition)
+	else:
+		editor = TransitionEditor.instantiate()
+		editor.mood = self
+
+	return editor
+
+
+## Used by the Plugin to hide certain properties.
+func should_skip_property(field: String) -> bool:
+	if field == "root_condition":
+		if is_instance_valid(machine) and not machine.evaluate_moods_directly:
+			return true
+			
+	return false
 
 ## Whether or not this node is the [member MoodMachine.current_mood]
 ## of its [member MoodMachineChild.machine].

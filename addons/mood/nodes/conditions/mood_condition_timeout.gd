@@ -9,20 +9,25 @@ class_name MoodConditionTimeout extends MoodCondition
 
 #region Constants
 
+const Editor := preload("res://addons/mood/scenes/editors/components/mood_ui_condition.tscn")
+const SubEditor := preload("res://addons/mood/scenes/editors/mood_ui_condition_timeout.tscn")
+
 ## Controls how we treat validity relative to the timeout.
 enum ValidationMode {
 	## Become valid on mood entry, become invalid on mood exit or timeout.
-	VALID_ON_ENTRY,
+	VALID_ON_ENTRY = 0,
 	## Become valid on mood exit, become invalid on mood entry or timeout.
-	VALID_ON_EXIT,
+	VALID_ON_EXIT = 1,
 	## Become valid on mood entry until timeout.
-	VALID_ON_ENTRY_UNBOUND,
+	VALID_ON_ENTRY_UNBOUND = 2,
 	## Become valid on mood exit until timeout.
-	VALID_ON_EXIT_UNBOUND 
+	VALID_ON_EXIT_UNBOUND = 3 
 }
 
 #region Public Variables
 
+## How long between when this condition becomes valid and the timeout occurs. 
+@export_range(0.0, 60.0, 1.0, "or_greater") var time_sec := 1.0
 ## Whether or not you want validity on mood entry or exit, and whether or not you want
 ## to invalidate on mood entry or exit (typically when [member MoodMachine.evaluate_nodes_directly]
 ## is [code]true[/code]) or only timeout (typically when false).
@@ -35,8 +40,6 @@ enum ValidationMode {
 @export var reset_on_reentry := true
 
 @export_group("Timer Settings")
-## How long between when this condition becomes valid and the timeout occurs. 
-@export_range(0.0, 60.0, 1.0, "or_greater") var time_sec := 1.0
 ## passthrough for [member SceneTree.create_timer] [param process_always].
 @export var process_always := false
 ## passthrough for [member SceneTree.create_timer] [param process_in_physics].
@@ -78,6 +81,14 @@ func _exit_mood(_next_mood: Mood) -> void:
 #endregion
 
 #region Public Methods
+
+func should_skip_property(field: String) -> bool:
+	return field in ["time_sec", "validation_mode", "trigger_sets_valid_to", "reset_on_reentry"]
+
+func get_sub_editor() -> CanvasItem:
+	var editor: CanvasItem = SubEditor.instantiate()
+	editor.condition = self
+	return editor
 
 func is_valid(cache: Dictionary = {}) -> bool:
 	return _valid

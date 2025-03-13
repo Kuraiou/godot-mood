@@ -8,11 +8,19 @@ class_name MoodConditionEntryWhitelist extends MoodCondition
 ## [member MoodMachine.evaluate_moods_directly] is set to [code]true[/code]; when used
 ## as part of a [MoodTransition] tree, it makes no sense.
 
+#region Public Variables
+
 ## When entering this mood, trigger _enter_mood on child scripts if the previous mood
 ## is in this list.
-@export var allow_transition_from: Array[Mood] = []
+@export var allow_transition_from := [] as Array[Mood]
+
+#endregion
+
+#region Public Methods
 
 ## This condition is valid when the machine's current mood is in the [member allow_transition_from]
 ## whitelist.
 func is_valid(cache: Dictionary = {}) -> bool:
 	return machine.current_mood in allow_transition_from
+
+#endregion

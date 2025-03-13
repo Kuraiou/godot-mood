@@ -21,7 +21,7 @@ extends VBoxContainer
 #region Public Methods
 
 func add_condition(condition: MoodCondition) -> Node:
-	var cond_scene = MoodEditors.get_editor(condition)
+	var cond_scene = Mood.Editors.get_editor(condition)
 	if cond_scene:
 		cond_scene.condition = condition
 		%Conditions.add_child(cond_scene)

@@ -5,6 +5,13 @@ class_name MoodConditionSignal extends MoodCondition
 ## [member signal_target] (defaulting to the machine target) is
 ## received.
 
+#region Constants
+
+## The PackedScene reference to the constant editor for this class.
+const Editor := preload("res://addons/mood/scenes/editors/mood_ui_condition_signal.tscn")
+
+#endregion
+
 #region Public Variables
 
 var _signal_target: Node
@@ -102,6 +109,11 @@ func _property_get_revert(property: StringName) -> Variant:
 #endregion
 
 #region Public Methods
+
+## Used by the Plugin to skip fields which are represented in the [method get_editor] return.
+func should_skip_property(field: String) -> bool:
+	return field in ["signal_triggers"]
+
 
 ## Whether or not the condition is valid. Used for transitioning state.
 func is_valid(cache: Dictionary = {}) -> bool:

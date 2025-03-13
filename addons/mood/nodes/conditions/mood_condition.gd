@@ -18,6 +18,10 @@ class_name MoodCondition extends MoodChild
 
 #region Public Methods
 
+## Used by the Plugin to skip fields which are represented in the [method get_editor] return.
+func should_skip_property(field: String) -> bool:
+	return false
+
 ## Returns whether or not an input is valid.[br] This [b]must[/b] be
 ## overridden in a child class.[br]
 ## [br]

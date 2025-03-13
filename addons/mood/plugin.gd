@@ -57,7 +57,8 @@ func _disable_plugin() -> void:
 	remove_autoload_singleton("Recursion")
 	remove_autoload_singleton("InputTracker")
 
-func _enter_tree() -> void:	
+func _enter_tree() -> void:
+	_load_editors()
 	condition_inspector_instance = INSPECTOR_CONDITION_GROUP_SCRIPT.new()
 	add_inspector_plugin(condition_inspector_instance)
 	
@@ -72,6 +73,15 @@ func _exit_tree() -> void:
 #endregion
 
 #region Private Methods
+
+func _load_editors() -> void:
+	var class_paths := LocalClassFunctions.get_class_tree_for("MoodCondition").get_flat_data("path")
+	for klass: String in class_paths:
+		var script_path: String = class_paths[klass]
+		var klass_ref := load(script_path)
+		if "Editor" in klass_ref and klass not in Mood.Editors.registered_editors:
+			print("Registering editor for ", klass)
+			Mood.Editors.register_type(klass, klass_ref.get("Editor"))
 
 func _get_plugin_setting(key: String) -> Variant:
 	if key not in CUSTOM_PROPERTIES:

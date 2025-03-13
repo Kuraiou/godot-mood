@@ -14,6 +14,9 @@ class_name MoodConditionProperty extends MoodCondition
 
 #region Constants
 
+## The PackedScene reference to the constant editor for this class.
+const Editor := preload("res://addons/mood/scenes/editors/mood_ui_condition_property.tscn")
+
 ## The mechanism to compare the evaluated [member property] to the [member criteria].
 enum Operator {
 	## ==
@@ -94,6 +97,10 @@ func _property_get_revert(property: StringName) -> Variant:
 #endregion
 
 #region Public Methods
+
+## Used by the Plugin to skip fields which are represented in the [method get_editor] return.
+func should_skip_property(field: String) -> bool:
+	return field in ["property", "comparator", "criteria", "is_callable", "is_node_path", "node_path_root"]
 
 ## This condition is valid if the result of comparing the [member property_target]'s
 ## [member property] to the [member criteria] via the [member comparator] results in

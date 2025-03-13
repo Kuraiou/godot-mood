@@ -20,6 +20,20 @@ class LocalTreeItem:
 	func set_content(_content: Variant) -> void:
 		self.content = _content
 
+	func get_flat_data(field: String, recursive := true, result: Dictionary[String, Variant] = {} as Dictionary[String, Variant]) -> Dictionary[String, Variant]:
+		if field in content:
+			result[name] = content[field]
+
+		if recursive:
+			for child: LocalTreeItem in children:
+				child.get_flat_data(field, true, result)
+		else:
+			for child: LocalTreeItem in children:
+				if field in child.content:
+					result[child.name] = child.content[field]
+
+		return result
+
 	func add_child(input: Variant) -> LocalTreeItem:
 		if input is LocalTreeItem:
 			children.append(input)
@@ -76,6 +90,10 @@ static var _icon_map: Dictionary[String, String]
 #endregion
 
 #region Public Methods
+
+static func get_class_tree_for(klass: String) -> LocalTreeItem:
+	refresh_tree()
+	return _class_tree.find_in_tree(klass)
 
 ## Given a class name, return the icon path if it exists in the
 ## [member _icon_path_map].

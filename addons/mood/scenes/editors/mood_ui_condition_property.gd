@@ -147,6 +147,7 @@ func _update_property_editor() -> void:
 			if condition.criteria:
 				current_editor.text = "%s" % condition.criteria
 			else:
+				condition.criteria = 0
 				current_editor.text = "0"
 		TYPE_STRING, TYPE_STRING_NAME:
 			match prop["hint"]:

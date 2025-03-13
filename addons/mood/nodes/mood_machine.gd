@@ -313,6 +313,21 @@ func _physics_process(_delta) -> void:
 
 #region Public Methods
 
+## Used by the Plugin to hide certain properties.
+func should_skip_property(field: String) -> bool:
+	match field:
+		"transition_selection_strategy", "transition_fallback_strategy":
+			return evaluate_moods_directly
+		"mood_selection_strategy", "mood_fallback_strategy":
+			return !evaluate_moods_directly
+		"mood_fallback_script":
+			if evaluate_moods_directly:
+				return mood_fallback_strategy == MoodFallbackStrategy.DEFER_TO_CALLABLE
+			else:
+				return transition_fallback_strategy == TransitionFallbackStrategy.DEFER_TO_CALLABLE
+		_:
+			return false
+
 ## Return the current mood as a name.
 func mood() -> String:
 	return current_mood.name
@@ -406,7 +421,7 @@ func _find_next_valid_mood() -> Mood:
 		MoodFallbackStrategy.FALLBACK_TO_INITIAL:
 			return initial_mood
 		MoodFallbackStrategy.FALLBACK_TO_PREVIOUS:
-			if instance_is_valid(previous_mood):
+			if is_instance_valid(previous_mood):
 				return previous_mood
 			return initial_mood
 		MoodFallbackStrategy.DEFER_TO_CALLABLE:

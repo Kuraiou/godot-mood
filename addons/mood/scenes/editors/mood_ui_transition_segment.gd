@@ -2,7 +2,11 @@
 extends HBoxContainer
 
 #region Constants
-## put your const vars here.
+
+# TODO: remove copy-paste
+const COLOR_SELECTED := Color(0xB9EEC41FF)
+const COLOR_DESELECTED := Color(0x7F7F7FFF)
+
 #endregion
 
 #region Public Variables
@@ -26,11 +30,13 @@ extends HBoxContainer
 			target_mood_label.text = transition.to_mood.name
 
 		if is_instance_valid(transition.get_parent()): # this transition already exists
+			target_mood_label.add_theme_color_override("font_color", COLOR_SELECTED)
 			save_to_tree_button.hide()
 		else:
+			target_mood_label.add_theme_color_override("font_color", COLOR_DESELECTED)
 			save_to_tree_button.show()
 
-		_editor = MoodEditors.get_editor(transition)
+		_editor = Mood.Editors.get_editor(transition)
 		_editor.condition = transition
 		condition_container.add_child(_editor)
 
@@ -67,7 +73,6 @@ var _editor: CanvasItem
 ## put methods used as responses to signals here.
 ## we don't put #endregion here because this is the last block and when we use the
 ## UI to add signal hooks they always get concatenated at the end of the file.
-
 
 func _on_save_to_tree_pressed() -> void:
 	from_mood.add_child(transition)

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dt8l5e5xghfef" path="res://addons/mood/scenes/editors/mood_ui_transitions_container.gd" id="1_vepdv"]
 
-[node name="MoodUiConditionsContainer" type="VBoxContainer"]
+[node name="MoodUiTransitionsContainer" type="VBoxContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

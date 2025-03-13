@@ -7,6 +7,12 @@ class_name MoodConditionGroup extends MoodCondition
 ## [MoodTransition] is a special type of [MoodConditionGroup] used when
 ## [member MoodMachine.evaluate_moods_directly] is [code]false[/code].
 
+#region Constants
+
+const Editor: PackedScene = preload("res://addons/mood/scenes/editors/mood_ui_condition_group.tscn")
+
+#endregion
+
 #region Public Variables
 
 ## If this is true, then the condition group evaluates to [code]true[/code] only if
@@ -37,6 +43,10 @@ func _get_configuration_warnings() -> PackedStringArray:
 #endregion
 
 #region Public Methods
+
+## Used by the Plugin to skip fields.
+func should_skip_property(field: String) -> bool:
+	return field == "and_all_conditions"
 
 ## public getter for conditions.
 func get_conditions() -> Array[MoodCondition]:
