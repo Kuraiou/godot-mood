@@ -1,5 +1,4 @@
-@icon("icons/script.svg")
-@tool
+@icon("res://addons/mood/icons/script.svg")
 class_name MoodScript extends MoodChild
 
 @warning_ignore("unused_variable")

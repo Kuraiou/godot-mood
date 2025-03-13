@@ -1,0 +1,32 @@
+[gd_scene load_steps=2 format=3 uid="uid://312iou8ys0gt"]
+
+[ext_resource type="Script" uid="uid://ddo84t7hjdq30" path="res://addons/mood/scenes/editors/popups/mood_ui_action_selector.gd" id="1_qj6p1"]
+
+[node name="MoodUiActionSelector" type="ConfirmationDialog" node_paths=PackedStringArray("item_list")]
+title = "Select Actions"
+initial_position = 4
+size = Vector2i(400, 480)
+content_scale_mode = 1
+script = ExtResource("1_qj6p1")
+item_list = NodePath("ScrollContainer/ItemList")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(300, 200)
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 431.0
+grow_horizontal = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ItemList" type="ItemList" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+select_mode = 1
+allow_reselect = true
+allow_rmb_select = true
+auto_height = true
