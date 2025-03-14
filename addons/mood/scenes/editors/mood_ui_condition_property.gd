@@ -9,7 +9,7 @@ const VALID_TYPES := [
 ]
 const METHOD_SELECTOR_SCENE := preload("res://addons/mood/scenes/editors/popups/mood_ui_method_selector.tscn")
 
-const COLOR_SELECTED := Color(0xB9EEC41FF)
+const COLOR_SELECTED := Color(0x55F3E3FF)
 const COLOR_DESELECTED := Color(0x7F7F7FFF)
 
 #endregion
