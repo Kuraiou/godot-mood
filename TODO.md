@@ -32,9 +32,7 @@ These are general plans for future improvements -- basically a worksheet for gui
 # UI
 
 * get input from an actual designer and redo the Editor UI to be better.
-	* show more icons
 	* differentiate colors better.
-* Redesign the icons. The current icons are placeholders.
 * Add a means to "Go to this Node" in the Conditions Editor to go straight to that node.
 # Developer Support
 
