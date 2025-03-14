@@ -1,5 +1,5 @@
 @tool
-@icon("res://addons/mood/icons/circles.svg")
+@icon("res://addons/mood/icons/mood_robot.png")
 class_name MoodMachine extends Node
 
 ## The Finite State Machine for the Mood Plugin.[br]

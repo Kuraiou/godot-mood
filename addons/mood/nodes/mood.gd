@@ -1,6 +1,5 @@
 @tool
-@icon("res://addons/mood/icons/target.svg")
-
+@icon("res://addons/mood/icons/mood.png")
 class_name Mood extends MoodMachineChild
 
 ## A [Mood] is a representation of a State in a [MoodMachine], which is a Finite

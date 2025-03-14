@@ -1,4 +1,5 @@
 @tool
+@icon("res://addons/mood/icons/mood_frown.png")
 class_name MoodConditionEntryWhitelist extends MoodCondition
 
 ## A [MoodCondition] which is considered valid if its parent [member MoodMachineChild.machine]'s

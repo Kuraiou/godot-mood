@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://c8ha2ga6v0w3a"]
 
 [ext_resource type="Script" uid="uid://btiqt3wa6p28e" path="res://addons/mood/scenes/editors/mood_ui_condition_property.gd" id="1_ayhqb"]
-[ext_resource type="Texture2D" uid="uid://c0ipnppxufc8u" path="res://addons/mood/icons/trash.svg" id="2_76o34"]
+[ext_resource type="Texture2D" uid="uid://xicidjwtgaq0" path="res://addons/mood/icons/mood_trash.png" id="2_76o34"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o3bqq"]
 draw_center = false
@@ -58,13 +58,13 @@ size_flags_horizontal = 2
 [node name="Index" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_colors/font_color = Color(0.72549, 0.92549, 0.254902, 1)
+theme_override_colors/font_color = Color(0.333333, 0.952941, 0.890196, 1)
 text = "0"
 
 [node name="RemoveConditionButton" type="Button" parent="HeaderContainer/HBoxContainer"]
 custom_minimum_size = Vector2(25, 25)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 10
 icon = ExtResource("2_76o34")
 icon_alignment = 1
 expand_icon = true

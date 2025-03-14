@@ -1,4 +1,5 @@
 @tool
+@icon("res://addons/mood/icons/mood_hourglass.png")
 class_name MoodConditionTimeout extends MoodCondition
 
 ## A condition which is valid based on a triggered timeout that begins when

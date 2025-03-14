@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://b83qn3wnyfv2u"]
 
 [ext_resource type="Script" uid="uid://ciq7cpetuehvl" path="res://addons/mood/scenes/editors/mood_ui_condition_group.gd" id="1_saayx"]
-[ext_resource type="Texture2D" uid="uid://c0ipnppxufc8u" path="res://addons/mood/icons/trash.svg" id="4_j5igr"]
+[ext_resource type="Texture2D" uid="uid://xicidjwtgaq0" path="res://addons/mood/icons/mood_trash.png" id="4_j5igr"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5akar"]
 draw_center = false
@@ -52,13 +52,13 @@ size_flags_horizontal = 3
 [node name="IndexLabel" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.72549, 0.92549, 0.254902, 1)
+theme_override_colors/font_color = Color(0.333333, 0.952941, 0.890196, 1)
 text = "-1"
 
 [node name="RemoveGroup" type="Button" parent="HeaderContainer/HBoxContainer"]
 custom_minimum_size = Vector2(25, 25)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 10
 tooltip_text = "Remove this condition group."
 icon = ExtResource("4_j5igr")
 icon_alignment = 1

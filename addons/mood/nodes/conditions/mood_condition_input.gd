@@ -1,4 +1,5 @@
 @tool
+@icon("res://addons/mood/icons/mood_dpad.png")
 class_name MoodConditionInput extends MoodCondition
 
 ## A condition that encapsulates validation of input state based on [InputMap] actions.[br]

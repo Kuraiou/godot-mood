@@ -4,7 +4,7 @@ extends HBoxContainer
 #region Constants
 
 # TODO: remove copy-paste
-const COLOR_SELECTED := Color(0xB9EEC41FF)
+const COLOR_SELECTED := Color(0x55F3E3FF)
 const COLOR_DESELECTED := Color(0x7F7F7FFF)
 
 #endregion

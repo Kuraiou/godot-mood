@@ -1,4 +1,5 @@
 @tool
+@icon("res://addons/mood/icons/mood_signal.png")
 class_name MoodConditionSignal extends MoodCondition
 
 ## A condition which becomes valid when a signal from the

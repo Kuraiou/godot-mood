@@ -1,5 +1,5 @@
 @tool
-@icon("res://addons/mood/icons/eye-open.svg")
+@icon("res://addons/mood/icons/mood_checkbox.png")
 class_name MoodConditionProperty extends MoodCondition
 
 ## A type of condition that evaluates whether a property or method value on a
