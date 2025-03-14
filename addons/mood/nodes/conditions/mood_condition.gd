@@ -1,5 +1,5 @@
 @tool
-@icon("res://addons/mood/icons/circle-question.svg")
+@icon("res://addons/mood/icons/mood_question.png")
 class_name MoodCondition extends MoodChild
 
 ## A class which represents an evaluation of state validity, used to determine

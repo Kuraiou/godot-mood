@@ -1,5 +1,5 @@
 @tool
-@icon("res://addons/mood/icons/transmission-circle.svg")
+@icon("res://addons/mood/icons/mood_tree.png")
 class_name MoodConditionGroup extends MoodCondition
 
 ## A [MoodCondition] used to group multiple conditions together.[br]

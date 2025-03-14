@@ -1,5 +1,5 @@
 @tool
-@icon("res://addons/mood/icons/circle-arrow-right.svg")
+@icon("res://addons/mood/icons/mood_arrow_right.png")
 class_name MoodTransition extends MoodConditionGroup
 
 ## A class which represents the root of condition nodes to transition to a
