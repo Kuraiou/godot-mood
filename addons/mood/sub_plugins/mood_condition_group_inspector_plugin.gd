@@ -18,8 +18,12 @@ func _parse_begin(object: Object) -> void:
 		return
 
 	# if it's a top-level property we should not remove it.
-	if "remove_button" in editor:
+	if "remove_button" in editor and is_instance_valid(editor.remove_button):
 		editor.remove_button.hide()
+
+	# we can't go to ourselves!
+	if "go_to_node_button" in editor and is_instance_valid(editor.go_to_node_button):
+		editor.go_to_node_button.hide()
 
 	_condition_container = editor
 	add_custom_control(_condition_container)

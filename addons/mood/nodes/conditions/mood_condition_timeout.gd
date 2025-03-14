@@ -86,11 +86,6 @@ func _exit_mood(_next_mood: Mood) -> void:
 func should_skip_property(field: String) -> bool:
 	return field in ["time_sec", "validation_mode", "trigger_sets_valid_to", "reset_on_reentry"]
 
-func get_sub_editor() -> CanvasItem:
-	var editor: CanvasItem = SubEditor.instantiate()
-	editor.condition = self
-	return editor
-
 func is_valid(cache: Dictionary = {}) -> bool:
 	return _valid
 
