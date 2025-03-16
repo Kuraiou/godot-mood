@@ -1,5 +1,4 @@
 @tool
-@icon("res://addons/mood/icons/circle-arrow.svg")
 class_name MoodMethodDelegator extends MoodScript
 
 ## A generic Mood Component which allows delegation of behavior to methods in the

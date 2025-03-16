@@ -85,3 +85,7 @@ func _on_select_signaler_button_pressed() -> void:
 
 func _on_select_signaler_confirmed(node_path: NodePath) -> void:
 	condition.signal_target = get_tree().edited_scene_root.get_node(node_path)
+
+func _on_go_to_node_button_pressed() -> void:
+	if is_instance_valid(condition):
+		EditorInterface.inspect_object(condition)

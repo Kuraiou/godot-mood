@@ -82,6 +82,9 @@ enum InvalidTrigger {
 	TIMEOUT_OR_RELEASE
 }
 
+const Editor := preload("res://addons/mood/scenes/editors/components/mood_ui_condition.tscn")
+const SubEditor := preload("res://addons/mood/scenes/editors/mood_ui_condition_input.tscn")
+
 #endregion
 
 #region Public Variables

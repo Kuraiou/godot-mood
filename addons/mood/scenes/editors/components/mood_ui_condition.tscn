@@ -10,7 +10,7 @@ border_width_top = 2
 border_width_right = 2
 border_width_bottom = 1
 
-[node name="MoodUiCondition" type="VBoxContainer" node_paths=PackedStringArray("index_label", "remove_button", "condition_panel")]
+[node name="MoodUiCondition" type="VBoxContainer" node_paths=PackedStringArray("index_label", "remove_button", "condition_panel", "no_sub_editor_panel", "go_to_node_button")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -20,6 +20,8 @@ script = ExtResource("1_w8vpq")
 index_label = NodePath("HeaderContainer/HBoxContainer/HBoxContainer/IndexLabel")
 remove_button = NodePath("HeaderContainer/HBoxContainer/RemoveCondition")
 condition_panel = NodePath("PanelContainer")
+no_sub_editor_panel = NodePath("PanelContainer/NoSubEditorContainer")
+go_to_node_button = NodePath("HeaderContainer/HBoxContainer/HBoxContainer/GoToNodeButton")
 
 [node name="HeaderContainer" type="PanelContainer" parent="."]
 layout_mode = 2
@@ -40,6 +42,10 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.333333, 0.952941, 0.890196, 1)
 text = "-1"
 
+[node name="GoToNodeButton" type="Button" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "➡️"
+
 [node name="RemoveCondition" type="Button" parent="HeaderContainer/HBoxContainer"]
 custom_minimum_size = Vector2(25, 25)
 layout_mode = 2
@@ -53,4 +59,19 @@ expand_icon = true
 [node name="PanelContainer" type="PanelContainer" parent="."]
 layout_mode = 2
 
+[node name="NoSubEditorContainer" type="MarginContainer" parent="PanelContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="Label" type="Label" parent="PanelContainer/NoSubEditorContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "View the node in the editor to see details."
+vertical_alignment = 1
+
+[connection signal="pressed" from="HeaderContainer/HBoxContainer/HBoxContainer/GoToNodeButton" to="." method="_on_go_to_node_button_pressed"]
 [connection signal="pressed" from="HeaderContainer/HBoxContainer/RemoveCondition" to="." method="_on_remove_condition_pressed"]

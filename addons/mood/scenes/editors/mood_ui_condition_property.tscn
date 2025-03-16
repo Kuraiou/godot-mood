@@ -29,7 +29,7 @@ draw_center = false
 content_margin_left = 2.0
 content_margin_right = 2.0
 
-[node name="MoodUiCondition" type="VBoxContainer" node_paths=PackedStringArray("index_label", "remove_button")]
+[node name="MoodUiConditionProperty" type="VBoxContainer" node_paths=PackedStringArray("index_label", "remove_button", "go_to_node_button")]
 anchors_preset = 10
 anchor_right = 1.0
 offset_right = -804.0
@@ -41,6 +41,7 @@ theme_override_constants/separation = 0
 script = ExtResource("1_ayhqb")
 index_label = NodePath("HeaderContainer/HBoxContainer/HBoxContainer/Index")
 remove_button = NodePath("HeaderContainer/HBoxContainer/RemoveConditionButton")
+go_to_node_button = NodePath("HeaderContainer/HBoxContainer/HBoxContainer/GoToNodeButton")
 
 [node name="HeaderContainer" type="PanelContainer" parent="."]
 layout_mode = 2
@@ -53,13 +54,18 @@ theme_override_constants/separation = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="HeaderContainer/HBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 2
+size_flags_horizontal = 3
 
 [node name="Index" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 4
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.333333, 0.952941, 0.890196, 1)
 text = "0"
+
+[node name="GoToNodeButton" type="Button" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 10
+text = "➡️"
 
 [node name="RemoveConditionButton" type="Button" parent="HeaderContainer/HBoxContainer"]
 custom_minimum_size = Vector2(25, 25)
@@ -198,6 +204,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.497474, 0.497474, 0.497474, 1)
 text = "<Selected Editor>"
 
+[connection signal="pressed" from="HeaderContainer/HBoxContainer/HBoxContainer/GoToNodeButton" to="." method="_on_go_to_node_button_pressed"]
 [connection signal="pressed" from="HeaderContainer/HBoxContainer/RemoveConditionButton" to="." method="_on_remove_condition_button_pressed"]
 [connection signal="pressed" from="ConditionContainer/HBoxContainer/PropSelectorContainer/PropPicker/VBoxContainer/PropertySelectorButton" to="." method="_on_property_selector_button_pressed"]
 [connection signal="pressed" from="ConditionContainer/HBoxContainer/PropSelectorContainer/PropPicker/VBoxContainer/MethodSelectorButton" to="." method="_on_method_selector_pressed"]

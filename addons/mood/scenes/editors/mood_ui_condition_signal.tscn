@@ -38,13 +38,18 @@ theme_override_constants/separation = 0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="HeaderContainer/HBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 2
+size_flags_horizontal = 3
 
 [node name="Index" type="Label" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 4
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.333333, 0.952941, 0.890196, 1)
 text = "0"
+
+[node name="GoToNodeButton" type="Button" parent="HeaderContainer/HBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 10
+text = "➡️"
 
 [node name="RemoveConditionButton" type="Button" parent="HeaderContainer/HBoxContainer"]
 custom_minimum_size = Vector2(25, 25)
@@ -85,5 +90,6 @@ layout_mode = 2
 layout_mode = 2
 text = "Select Signals"
 
+[connection signal="pressed" from="HeaderContainer/HBoxContainer/HBoxContainer/GoToNodeButton" to="." method="_on_go_to_node_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/SelectSignalerButton" to="." method="_on_select_signaler_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/PopupButton" to="." method="_on_popup_button_pressed"]

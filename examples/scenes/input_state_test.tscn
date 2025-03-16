@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bflpa67sbry4n"]
+[gd_scene load_steps=15 format=3 uid="uid://bflpa67sbry4n"]
 
 [ext_resource type="Script" uid="uid://cexmmjes4fv" path="res://examples/scenes/player.gd" id="1_an8x8"]
 [ext_resource type="Texture2D" uid="uid://b3vsw8i10o171" path="res://icon.svg" id="1_bom16"]
@@ -11,9 +11,11 @@
 [ext_resource type="Script" uid="uid://6fcf7wp86vg3" path="res://examples/scenes/move_target.gd" id="8_fiv1m"]
 [ext_resource type="Script" uid="uid://qrxr1kr7m25j" path="res://examples/scenes/drain_stamina.gd" id="8_y8xmq"]
 [ext_resource type="Script" uid="uid://crhu6u6mstp77" path="res://examples/scenes/test_ui.gd" id="10_ogi84"]
+[ext_resource type="Script" uid="uid://bapwnus850ael" path="res://addons/mood/nodes/conditions/mood_condition_signal.gd" id="11_vrm4l"]
+[ext_resource type="Script" uid="uid://dcpo42vd114w3" path="res://examples/scenes/rage_handler.gd" id="12_dymhy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ogi84"]
-size = Vector2(127, 125)
+size = Vector2(65.75, 64.25)
 
 [node name="InputStateTest" type="Node2D"]
 
@@ -25,11 +27,13 @@ sprint_speed = 600
 sprint_machine = NodePath("SprintMachine")
 
 [node name="Sprite2D" type="Sprite2D" parent="Player"]
+scale = Vector2(2, 2)
 texture = ExtResource("1_bom16")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
-position = Vector2(0.5, -0.5)
+position = Vector2(0.125, -0.125)
 shape = SubResource("RectangleShape2D_ogi84")
+debug_color = Color(0, 0.6, 0.701961, 0)
 
 [node name="MoveMachine" type="Node" parent="Player" node_paths=PackedStringArray("initial_mood", "target")]
 script = ExtResource("2_an8x8")
@@ -59,6 +63,16 @@ time_sec = 2.0
 validation_mode = 3
 trigger_sets_valid_to = false
 metadata/_custom_type_script = "uid://lth7jksuyveq"
+
+[node name="BeginRaging" type="Node" parent="Player/MoveMachine/Idle" node_paths=PackedStringArray("to_mood")]
+script = ExtResource("4_y8xmq")
+to_mood = NodePath("../../Raging")
+metadata/_custom_type_script = "uid://corvum2mgs3oh"
+
+[node name="RageTriggered" type="Node" parent="Player/MoveMachine/Idle/BeginRaging" node_paths=PackedStringArray("signal_target")]
+script = ExtResource("11_vrm4l")
+signal_target = NodePath("../../../..")
+signal_triggers = Array[String](["start_rage"])
 
 [node name="RecoverStamina" type="Node" parent="Player/MoveMachine/Idle"]
 script = ExtResource("8_y8xmq")
@@ -90,7 +104,7 @@ metadata/_custom_type_script = "uid://corvum2mgs3oh"
 
 [node name="IsSprinting" type="Node" parent="Player/MoveMachine/Moving/TransitionToSprinting" node_paths=PackedStringArray("property_target")]
 script = ExtResource("7_u1pv1")
-property_target = NodePath("../../../..")
+property_target = NodePath("../../../../SprintMachine")
 property = "mood"
 criteria = "Sprinting"
 is_callable = true
@@ -112,7 +126,7 @@ metadata/_custom_type_script = "uid://corvum2mgs3oh"
 
 [node name="NotSprinting" type="Node" parent="Player/MoveMachine/Sprinting/TransitionToMoving" node_paths=PackedStringArray("property_target")]
 script = ExtResource("7_u1pv1")
-property_target = NodePath("../../../..")
+property_target = NodePath("../../../../SprintMachine")
 property = "mood"
 comparator = 5
 criteria = "Sprinting"
@@ -140,6 +154,31 @@ metadata/_custom_type_script = "uid://d17xu8yphmvpi"
 [node name="DrainStamina" type="Node" parent="Player/MoveMachine/Sprinting"]
 script = ExtResource("8_y8xmq")
 stamina_per_sec = 25.0
+metadata/_custom_type_script = "uid://d17xu8yphmvpi"
+
+[node name="Raging" type="Node" parent="Player/MoveMachine"]
+script = ExtResource("3_u1pv1")
+metadata/_custom_type_script = "uid://0re6tuqk5egu"
+
+[node name="BackToIdle" type="Node" parent="Player/MoveMachine/Raging" node_paths=PackedStringArray("to_mood")]
+script = ExtResource("4_y8xmq")
+to_mood = NodePath("../../Idle")
+metadata/_custom_type_script = "uid://corvum2mgs3oh"
+
+[node name="MoodConditionSignal" type="Node" parent="Player/MoveMachine/Raging/BackToIdle" node_paths=PackedStringArray("signal_target")]
+script = ExtResource("11_vrm4l")
+signal_target = NodePath("../../../..")
+signal_triggers = Array[String](["end_rage"])
+metadata/_custom_type_script = "uid://bapwnus850ael"
+
+[node name="SprintUpdatePosition" type="Node" parent="Player/MoveMachine/Raging"]
+script = ExtResource("8_fiv1m")
+speed_const = "sprint_speed"
+metadata/_custom_type_script = "uid://d17xu8yphmvpi"
+
+[node name="HandleRageTrigger" type="Node" parent="Player/MoveMachine/Raging" node_paths=PackedStringArray("modulate_target")]
+script = ExtResource("12_dymhy")
+modulate_target = NodePath("../../../Sprite2D")
 metadata/_custom_type_script = "uid://d17xu8yphmvpi"
 
 [node name="SprintMachine" type="Node" parent="Player" node_paths=PackedStringArray("initial_mood", "target")]

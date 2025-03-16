@@ -26,6 +26,14 @@ const TransitionEditor = preload("res://addons/mood/scenes/editors/mood_ui_trans
 class Editors: # for namespacing purposes
 	static var registered_editors := {} as Dictionary[String, PackedScene]
 
+	static func has_editor_by_path(path: String) -> bool:
+		var obj: Object = load(path).new()
+		return has_editor(obj)
+
+	static func get_editor_by_path(path: String) -> CanvasItem:
+		var obj: Node = load(path).new() as Node
+		return get_editor(obj)
+
 	static func has_editor(object: Object) -> bool:
 		if object.has_method("get_editor"):
 			return true
