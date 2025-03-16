@@ -5,6 +5,7 @@ extends VBoxContainer
 
 @export var index_label: Label
 @export var condition_type_option: OptionButton
+@export var go_to_node_button: Button
 @export var _was_removed := false
 
 @export var remove_button: Button
@@ -111,3 +112,7 @@ func _on_child_option_item_selected(index: int) -> void:
 	_create_condition(selected_type, new_condition_klass)
 	
 	condition_type_option.select(0)
+
+func _on_go_to_node_button_pressed() -> void:
+	if is_instance_valid(condition):
+		EditorInterface.inspect_object(condition)

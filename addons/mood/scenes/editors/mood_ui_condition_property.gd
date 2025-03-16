@@ -18,6 +18,7 @@ const COLOR_DESELECTED := Color(0x7F7F7FFF)
 
 @export var index_label: Label
 @export var remove_button: Button
+@export var go_to_node_button: Button
 
 @export var _was_removed := false
 
@@ -266,3 +267,7 @@ func _on_node_edit_confirmed(node_path: NodePath) -> void:
 		condition.is_node_path = false
 		condition.node_path_root = null
 		%SelectedNodeLabel.hide()
+
+func _on_go_to_node_button_pressed() -> void:
+	if is_instance_valid(condition):
+		EditorInterface.inspect_object(condition)
