@@ -49,4 +49,5 @@ placeholder_text = "Search for Action"
 
 [connection signal="confirmed" from="." to="." method="_on_confirmed"]
 [connection signal="custom_action" from="." to="." method="_on_custom_action"]
+[connection signal="multi_selected" from="VBoxContainer/ScrollContainer/ItemList" to="." method="_on_item_list_multi_selected"]
 [connection signal="text_changed" from="VBoxContainer/HBoxContainer/ActionSearch" to="." method="_on_action_search_text_changed"]
