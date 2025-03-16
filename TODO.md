@@ -30,6 +30,8 @@ These are general plans for future improvements -- basically a worksheet for gui
 	* find ways to manage those signatures/parameters.
 		* support for flagging validity tied to parameter criteria (like `MoodConditionProperty`).
 			* e.g. "if an Area2D signal target receives a `area_entered` signal with an `Area2D` that has a `health` property `<=` to `10`, become valid"
+	* replace `Timer` `@export`s with time configuration to use scene timers instead.
+	* add an `invert_validity` `@export`
 * `MoodConditionInput`
 	* support other input-handling mechanisms -- `GUIDEINput` or raw inputs instead of keypress, remove/replace `InputTracker` as it feels fragile,  etc.
 * `MoodConditionTimeout`
