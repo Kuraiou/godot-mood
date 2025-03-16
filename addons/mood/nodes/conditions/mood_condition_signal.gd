@@ -107,6 +107,10 @@ func _property_get_revert(property: StringName) -> Variant:
 		_:
 			return null
 
+func _exit_mood(_next_mood: Mood) -> void:
+	if clear_on_transition:
+		_received_signal = false
+
 #endregion
 
 #region Public Methods
@@ -118,9 +122,6 @@ func should_skip_property(field: String) -> bool:
 
 ## Whether or not the condition is valid. Used for transitioning state.
 func is_valid(cache: Dictionary = {}) -> bool:
-	if _received_signal and clear_on_transition:
-		_received_signal = false
-
 	return _received_signal
 
 #endregion
