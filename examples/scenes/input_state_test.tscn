@@ -213,6 +213,7 @@ metadata/_custom_type_script = "uid://0re6tuqk5egu"
 [node name="ToNotSprinting" type="Node" parent="Player/SprintMachine/Sprinting" node_paths=PackedStringArray("to_mood")]
 script = ExtResource("4_y8xmq")
 to_mood = NodePath("../../NotSprinting")
+and_all_conditions = false
 metadata/_custom_type_script = "uid://corvum2mgs3oh"
 
 [node name="NoStamina" type="Node" parent="Player/SprintMachine/Sprinting/ToNotSprinting" node_paths=PackedStringArray("property_target")]
@@ -253,3 +254,5 @@ layout_mode = 2
 layout_mode = 2
 
 [connection signal="stamina_changed" from="Player" to="UI" method="_on_player_stamina_changed"]
+[connection signal="mood_changed" from="Player/MoveMachine" to="UI" method="_on_move_machine_mood_changed"]
+[connection signal="mood_changed" from="Player/SprintMachine" to="UI" method="_on_sprint_machine_mood_changed"]

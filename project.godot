@@ -21,8 +21,6 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-LocalClassFunctions="*res://addons/mood/autoloads/local_class_functions.gd"
-Recursion="*res://addons/mood/autoloads/recursion.gd"
 InputTracker="*res://addons/mood/autoloads/input_tracker.gd"
 
 [debug]

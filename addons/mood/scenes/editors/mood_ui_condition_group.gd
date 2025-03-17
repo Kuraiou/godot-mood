@@ -36,7 +36,7 @@ func _ready() -> void:
 		condition_type_option.clear()
 		condition_type_option.add_item("Add a Child Condition", 0)
 
-		_condition_children = LocalClassFunctions.get_class_tree_for("MoodCondition").get_flat_data("path")
+		_condition_children = Mood.LocalClassFunctions.get_class_tree_for("MoodCondition").get_flat_data("path")
 		var i := 1
 		for child_class in _condition_children:
 			if child_class == "MoodCondition" or child_class == "MoodTransition":
