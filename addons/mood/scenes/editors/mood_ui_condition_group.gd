@@ -33,6 +33,9 @@ func _ready() -> void:
 		return
 
 	if not is_instance_valid(_condition_children):
+		condition_type_option.clear()
+		condition_type_option.add_item("Add a Child Condition", 0)
+
 		_condition_children = LocalClassFunctions.get_class_tree_for("MoodCondition").get_flat_data("path")
 		var i := 1
 		for child_class in _condition_children:
