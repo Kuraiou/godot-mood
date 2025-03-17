@@ -10,6 +10,9 @@ const CUSTOM_PROPERTIES: Dictionary = {
 	"input_echo_delay_sec": {"category": "input", "type": TYPE_FLOAT, "default": 0.00},
 }
 
+# because we need this singleton always, we put it in the plugin directly even if it could be autoloaded
+const LocalClassFunctionsLocal := preload("res://addons/mood/autoloads/local_class_functions.gd")
+
 #endregion
 
 #region Variables
@@ -75,12 +78,11 @@ func _exit_tree() -> void:
 #region Private Methods
 
 func _load_editors() -> void:
-	var class_paths := LocalClassFunctions.get_class_tree_for("MoodCondition").get_flat_data("path")
+	var class_paths := LocalClassFunctionsLocal.get_class_tree_for("MoodCondition").get_flat_data("path")
 	for klass: String in class_paths:
 		var script_path: String = class_paths[klass]
 		var klass_ref := load(script_path)
 		if "Editor" in klass_ref and klass not in Mood.Editors.registered_editors:
-			print("Registering editor for ", klass)
 			Mood.Editors.register_type(klass, klass_ref.get("Editor"))
 
 func _get_plugin_setting(key: String) -> Variant:
